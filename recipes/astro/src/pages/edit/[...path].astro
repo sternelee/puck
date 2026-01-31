@@ -1,0 +1,24 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getPage } from '../../lib/get-page';
+import PuckEditor from '../../components/PuckEditor';
+
+export const prerender = false;
+
+// Get the path from the URL params (empty for root)
+const { path } = Astro.params;
+const fullPath = '/' + (path || '');
+
+// Fetch page data or get default empty data
+const pageData = getPage(fullPath) || {
+  root: { props: { title: 'New Page' } },
+  content: [],
+  zones: {}
+};
+
+const title = `Editing: ${pageData?.root?.props?.title || 'New Page'}`;
+---
+
+<Layout title={title}>
+  <PuckEditor client:only data={pageData} path={fullPath} />
+</Layout>

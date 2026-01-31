@@ -1,0 +1,88 @@
+{
+  "pages": {
+    "/": {
+      "root": {
+        "props": {
+          "title": "Home"
+        }
+      },
+      "content": [
+        {
+          "type": "HeadingBlock",
+          "props": {
+            "id": "heading-1",
+            "title": "Welcome to Puck + Astro"
+          }
+        },
+        {
+          "type": "TextBlock",
+          "props": {
+            "id": "text-1",
+            "text": "This is a sample page built with Puck and Astro."
+          }
+        },
+        {
+          "type": "ColumnsBlock",
+          "props": {
+            "id": "columns-1",
+            "columns": [
+              {
+                "title": "Column 1",
+                "text": "First column content"
+              },
+              {
+                "title": "Column 2",
+                "text": "Second column content"
+              }
+            ]
+          }
+        }
+      ],
+      "zones": {}
+    },
+    "about": {
+      "root": {
+        "props": {
+          "title": "About"
+        }
+      },
+      "content": [
+        {
+          "type": "HeadingBlock",
+          "props": {
+            "id": "heading-2",
+            "title": "About Puck + Astro"
+          }
+        },
+        {
+          "type": "TextBlock",
+          "props": {
+            "id": "text-2",
+            "text": "Puck is an open-source visual editor for React. This recipe demonstrates how to integrate Puck with Astro's hybrid rendering."
+          }
+        },
+        {
+          "type": "ColumnsBlock",
+          "props": {
+            "id": "columns-2",
+            "columns": [
+              {
+                "title": "SSR Support",
+                "text": "Astro supports server-side rendering with its hybrid output mode."
+              },
+              {
+                "title": "React Integration",
+                "text": "Use @astrojs/react to render React components in Astro pages."
+              },
+              {
+                "title": "Visual Editing",
+                "text": "Edit pages visually with Puck's drag-and-drop editor."
+              }
+            ]
+          }
+        }
+      ],
+      "zones": {}
+    }
+  }
+}

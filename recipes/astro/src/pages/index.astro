@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getPage } from '../lib/get-page';
+
+export const prerender = true;
+
+const homePage = getPage('/');
+const title = homePage?.root?.props?.title || 'Home';
+---
+
+<Layout title={title}>
+  <div>
+    <nav style="padding: 16px; border-bottom: 1px solid #ccc; display: flex; gap: 16px;">
+      <a href="/">Home</a>
+      <a href="/edit">Edit Home</a>
+      <a href="/about">About</a>
+      <a href="/edit/about">Edit About</a>
+    </nav>
+    <main style="padding: 32px; max-width: 1200px; margin: 0 auto;">
+      <h1>{title}</h1>
+      <p>This is the Puck + Astro recipe.</p>
+      <p>
+        <a href="/edit">Edit this page with Puck editor</a>
+      </p>
+    </main>
+  </div>
+</Layout>

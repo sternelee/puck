@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getPage } from '../lib/get-page';
+import PageRenderer from '../components/PageRenderer';
+import type { PageData } from '../lib/get-page';
+
+export const prerender = false;
+
+// Get the path from the URL params
+const { path } = Astro.params;
+const fullPath = '/' + (path || '');
+
+// Fetch page data
+const pageData = getPage(fullPath);
+
+// Handle 404
+if (!pageData) {
+  return Astro.redirect('/404');
+}
+
+const title = pageData?.root?.props?.title || 'Page';
+---
+
+<Layout title={title}>
+  <div>
+    <nav style="padding: 16px; border-bottom: 1px solid #ccc; display: flex; gap: 16px;">
+      <a href="/">Home</a>
+      <a href="/edit">Edit Home</a>
+      <a href={fullPath === '/' ? '/edit' : `/edit${fullPath}`}>Edit This Page</a>
+    </nav>
+    <main>
+      <PageRenderer client:load data={pageData} path={fullPath} />
+    </main>
+  </div>
+</Layout>

@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+.astro/
+
+# Environment
+.env
+.env.*
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
