@@ -1,0 +1,54 @@
+{
+  "name": "@puckeditor/plugin-ai",
+  "version": "0.6.0",
+  "author": "Chris Villa <chris@puckeditor.com>",
+  "repository": "puckeditor/puck",
+  "bugs": "https://github.com/puckeditor/puck/issues",
+  "homepage": "https://puckeditor.com",
+  "keywords": [
+    "puck-ecosystem",
+    "puck-plugin"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./styles.css": "./dist/index.css"
+  },
+  "scripts": {
+    "lint": "eslint \"**/*.ts*\"",
+    "build": "rm -rf dist && tsup index.tsx",
+    "dev": "tsup index.tsx --watch",
+    "prepare": "pnpm build"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "react-textarea-autosize": "^8.5.9",
+    "use-stick-to-bottom": "^1.1.1"
+  },
+  "devDependencies": {
+    "@puckeditor/core": "workspace:*",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "eslint": "^7.32.0",
+    "eslint-config-custom": "workspace:*",
+    "lucide-react": "^0.452.0",
+    "tsconfig": "workspace:*",
+    "tsup": "^8.2.4",
+    "tsup-config": "workspace:*",
+    "typescript": "^5.5.4"
+  },
+  "peerDependencies": {
+    "@puckeditor/core": "^0.21.0",
+    "react": "^18.0.0 || ^19.0.0"
+  }
+}
