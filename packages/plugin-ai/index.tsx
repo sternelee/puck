@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect, useRef, type ReactNode, type ReactElement } from "react";
 import type { PuckAction, Data, Config, Plugin } from "@puckeditor/core";
-import { useGetPuck } from "@puckeditor/core";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { useStickToBottom } from "use-stick-to-bottom";
@@ -124,7 +123,7 @@ declare global {
 
 
 // Generate unique ID
-const generateId = (prefix = "") => `msg-${prefix ? `${prefix}_` : ""}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 // AI Panel component
 export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, prepareRequest }: AiPluginProps): ReactNode {
@@ -133,7 +132,6 @@ export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, 
   const [status, setStatus] = useState<"ready" | "streaming" | "error">("ready");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom();
-  const getPuck = useGetPuck();
 
   const sendMessage = useCallback(async (content: string) => {
     const userMessage: PuckMessage = { id: generateId(), role: "user", content };
@@ -142,29 +140,8 @@ export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, 
     setStatus("streaming");
 
     try {
-      // Get Puck state
-      const puckState = getPuck() as unknown as { config?: Config; state?: { data?: Data } } | undefined;
-      const config = puckState?.config ?? { components: {} };
-      const pageData = puckState?.state?.data ?? { root: {}, content: [] };
-
-      // Build config with root defaults
-      const root = config.root ?? {
-        fields: {
-          title: {
-            type: "text",
-            ai: { instructions: "The title for the page" },
-          },
-        },
-      };
-      const configWithRoot = { ...config, root };
-
       let opts: RequestOptions = {
-        body: {
-          chatId: generateId("chat"),
-          messages: newMessages,
-          pageData,
-          config: configWithRoot,
-        },
+        body: { messages: newMessages },
         headers: { "Content-Type": "application/json" },
         credentials: "same-origin",
       };
@@ -200,7 +177,7 @@ export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, 
       console.error("AI error:", error);
       setStatus("error");
     }
-  }, [host, messages, prepareRequest, getPuck]);
+  }, [host, messages, prepareRequest]);
 
   useEffect(() => {
     window.__PUCK_AI = {
