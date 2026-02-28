@@ -1,13 +1,5 @@
-import {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-  type ReactNode,
-  type ReactElement,
-} from "react";
+import { useState, useCallback, useEffect, useRef, type ReactNode, type ReactElement } from "react";
 import type { PuckAction, Data, Config, Plugin } from "@puckeditor/core";
-import { useGetPuck } from "@puckeditor/core";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { useStickToBottom } from "use-stick-to-bottom";
@@ -17,21 +9,11 @@ import "./styles.css";
 // Type definitions
 export type JSONSchema = {
   [k: string]: unknown;
-  $schema?:
-    | "https://json-schema.org/draft/2020-12/schema"
-    | "http://json-schema.org/draft-07/schema#"
-    | "http://json-schema.org/draft-04/schema#";
+  $schema?: "https://json-schema.org/draft/2020-12/schema" | "http://json-schema.org/draft-07/schema#" | "http://json-schema.org/draft-04/schema#";
   $id?: string;
   $ref?: string;
   $defs?: Record<string, JSONSchema>;
-  type?:
-    | "object"
-    | "array"
-    | "string"
-    | "number"
-    | "boolean"
-    | "null"
-    | "integer";
+  type?: "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
   properties?: Record<string, JSONSchema>;
   items?: JSONSchema | JSONSchema[];
   required?: string[];
@@ -59,48 +41,19 @@ export type FieldAiParams = {
 };
 
 // Operation types
-export type AddOperation = {
-  op: "add";
-  id: string;
-  index: number;
-  zone: string;
-  type: string;
-  props: object;
-};
+export type AddOperation = { op: "add"; id: string; index: number; zone: string; type: string; props: object };
 export type UpdateOperation = { op: "update"; id: string; props: object };
 export type UpdateRootOperation = { op: "updateRoot"; props: object };
-export type MoveOperation = {
-  op: "move";
-  zone: string;
-  id: string;
-  index: number;
-};
+export type MoveOperation = { op: "move"; zone: string; id: string; index: number };
 export type DeleteOperation = { op: "delete"; id: string };
 export type DuplicateOperation = { op: "duplicate"; id: string };
 export type ResetOperation = { op: "reset" };
-export type Operation =
-  | AddOperation
-  | UpdateOperation
-  | UpdateRootOperation
-  | MoveOperation
-  | DeleteOperation
-  | DuplicateOperation
-  | ResetOperation;
+export type Operation = AddOperation | UpdateOperation | UpdateRootOperation | MoveOperation | DeleteOperation | DuplicateOperation | ResetOperation;
 
 // Tool status types
-export type ToolStatus = {
-  loading: boolean;
-  label: string;
-  error?: { message: string };
-};
+export type ToolStatus = { loading: boolean; label: string; error?: { message: string } };
 export type DataToolStatus = { status: ToolStatus; toolCallId: string };
-export type TokenUsage = {
-  inputTokens?: number;
-  outputTokens?: number;
-  totalTokens?: number;
-  reasoningTokens?: number;
-  cachedInputTokens?: number;
-};
+export type TokenUsage = { inputTokens?: number; outputTokens?: number; totalTokens?: number; reasoningTokens?: number; cachedInputTokens?: number };
 export type DataFinish = { totalCost: number; tokenUsage: TokenUsage };
 
 // Puck data parts
@@ -109,10 +62,7 @@ export type PuckDataParts = {
   "puck-actions": PuckAction[];
   "build-op": Operation;
   "tool-status": DataToolStatus;
-  "user-tool": {
-    toolCallId: string;
-    tools: { name: string; input: unknown }[];
-  };
+  "user-tool": { toolCallId: string; tools: { name: string; input: unknown }[] };
   "send-screenshot": { id: string; urls: { [breakpoint: number]: string }[] };
   finish: DataFinish;
   page: Data;
@@ -148,25 +98,15 @@ export type AiPluginProps = {
     examplePrompts?: { label: string; href?: string; onClick?: () => void }[];
   };
   scrollTracking?: boolean;
-  prepareRequest?: (
-    opts: RequestOptions
-  ) => RequestOptions | Promise<RequestOptions>;
+  prepareRequest?: (opts: RequestOptions) => RequestOptions | Promise<RequestOptions>;
 };
 
 // Extend @puckeditor/core types
 declare module "@puckeditor/core" {
-  export interface ComponentMetadata {
-    ai?: ComponentAiParams;
-  }
-  export interface ComponentConfigExtensions {
-    ai?: ComponentAiParams;
-  }
-  export interface FieldMetadata {
-    ai?: FieldAiParams;
-  }
-  export interface BaseField {
-    ai?: FieldAiParams;
-  }
+  export interface ComponentMetadata { ai?: ComponentAiParams }
+  export interface ComponentConfigExtensions { ai?: ComponentAiParams }
+  export interface FieldMetadata { ai?: FieldAiParams }
+  export interface BaseField { ai?: FieldAiParams }
 }
 
 // Global window interface
@@ -181,105 +121,63 @@ declare global {
   }
 }
 
+
+// Generate unique ID
+const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+
 // AI Panel component
-export function AiPanel({
-  host = "/api/puck/chat",
-  chat,
-  scrollTracking = true,
-  prepareRequest,
-}: AiPluginProps): ReactNode {
+export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, prepareRequest }: AiPluginProps): ReactNode {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<PuckMessage[]>([]);
-  const [status, setStatus] = useState<"ready" | "streaming" | "error">(
-    "ready"
-  );
+  const [status, setStatus] = useState<"ready" | "streaming" | "error">("ready");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom();
-  const getPuck = useGetPuck();
 
-  // Generate unique ID with prefix
-  const generateId = (prefix = "") =>
-    `msg-${prefix ? `${prefix}_` : ""}${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  const sendMessage = useCallback(async (content: string) => {
+    const userMessage: PuckMessage = { id: generateId(), role: "user", content };
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
+    setStatus("streaming");
 
-  const sendMessage = useCallback(
-    async (content: string, trigger?: string) => {
-      const userMessage: PuckMessage = {
-        id: generateId(),
-        role: "user",
-        content,
+    try {
+      let opts: RequestOptions = {
+        body: { messages: newMessages },
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
       };
-      const newMessages = [...messages, userMessage];
-      setMessages(newMessages);
-      setStatus("streaming");
 
-      try {
-        const puck = getPuck() as unknown as { config: Config; state: { data: Data } };
-        const config = puck.config;
-        const pageData = puck.state.data;
-
-        // Build config with root defaults
-        const root = config.root ?? {
-          fields: {
-            title: {
-              type: "text",
-              ai: { instructions: "The title for the page" },
-            },
-          },
-        };
-        const configWithRoot = {
-          ...config,
-          root,
-        };
-
-        let opts: RequestOptions = {
-          body: {
-            chatId: generateId("chat"),
-            trigger,
-            messages: newMessages,
-            pageData,
-            config: configWithRoot,
-          },
-          headers: { "Content-Type": "application/json" },
-          credentials: "same-origin",
-        };
-
-        if (prepareRequest) {
-          opts = await prepareRequest(opts);
-        }
-
-        const response = await fetch(host, {
-          method: "POST",
-          headers: opts.headers,
-          body: JSON.stringify(opts.body),
-          credentials: opts.credentials,
-        });
-
-        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
-
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-        let assistantContent = "";
-        const assistantId = generateId();
-
-        while (reader) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          assistantContent += chunk;
-          setMessages([
-            ...newMessages,
-            { id: assistantId, role: "assistant", content: assistantContent },
-          ]);
-        }
-
-        setStatus("ready");
-      } catch (error) {
-        console.error("AI error:", error);
-        setStatus("error");
+      if (prepareRequest) {
+        opts = await prepareRequest(opts);
       }
-    },
-    [host, messages, prepareRequest, getPuck]
-  );
+
+      const response = await fetch(host, {
+        method: "POST",
+        headers: opts.headers,
+        body: JSON.stringify(opts.body),
+        credentials: opts.credentials,
+      });
+
+      if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      let assistantContent = "";
+      const assistantId = generateId();
+
+      while (reader) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        assistantContent += chunk;
+        setMessages([...newMessages, { id: assistantId, role: "assistant", content: assistantContent }]);
+      }
+
+      setStatus("ready");
+    } catch (error) {
+      console.error("AI error:", error);
+      setStatus("error");
+    }
+  }, [host, messages, prepareRequest]);
 
   useEffect(() => {
     window.__PUCK_AI = {
@@ -288,9 +186,7 @@ export function AiPanel({
       processData: (data) => console.log("Process data:", data),
       setStatus: (s) => setStatus(s),
     };
-    return () => {
-      delete window.__PUCK_AI;
-    };
+    return () => { delete window.__PUCK_AI; };
   }, [sendMessage]);
 
   useEffect(() => {
@@ -304,23 +200,14 @@ export function AiPanel({
     setInput("");
   }, [input, status, chat, sendMessage]);
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSend();
-      }
-    },
-    [handleSend]
-  );
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+  }, [handleSend]);
 
-  const handleExampleClick = useCallback(
-    (prompt: { label: string; href?: string; onClick?: () => void }) => {
-      if (prompt.onClick) prompt.onClick();
-      else setInput(prompt.label);
-    },
-    []
-  );
+  const handleExampleClick = useCallback((prompt: { label: string; href?: string; onClick?: () => void }) => {
+    if (prompt.onClick) prompt.onClick();
+    else setInput(prompt.label);
+  }, []);
 
   return (
     <div className="puck-ai-panel">
@@ -328,19 +215,13 @@ export function AiPanel({
         <div ref={contentRef}>
           {messages.length === 0 ? (
             <div className="puck-ai-empty">
-              <div className="puck-ai-empty-icon">
-                <Sparkles size={48} />
-              </div>
+              <div className="puck-ai-empty-icon"><Sparkles size={48} /></div>
               <h3>AI Assistant</h3>
               <p>Describe what you want to build or modify on your page.</p>
               {chat?.examplePrompts && (
                 <div className="puck-ai-example-prompts">
                   {chat.examplePrompts.map((prompt, i) => (
-                    <button
-                      key={i}
-                      className="puck-ai-example-prompt"
-                      onClick={() => handleExampleClick(prompt)}
-                    >
+                    <button key={i} className="puck-ai-example-prompt" onClick={() => handleExampleClick(prompt)}>
                       {prompt.label}
                     </button>
                   ))}
@@ -349,23 +230,12 @@ export function AiPanel({
             </div>
           ) : (
             messages.map((message) => (
-              <div
-                key={message.id}
-                className={`puck-ai-message ${message.role}`}
-              >
+              <div key={message.id} className={`puck-ai-message ${message.role}`}>
                 <div className={`puck-ai-avatar ${message.role}`}>
-                  {message.role === "user" ? (
-                    <User size={18} />
-                  ) : (
-                    <Bot size={18} />
-                  )}
+                  {message.role === "user" ? <User size={18} /> : <Bot size={18} />}
                 </div>
                 <div className="puck-ai-content">
-                  {message.role === "assistant" ? (
-                    <ReactMarkdown>{message.content}</ReactMarkdown>
-                  ) : (
-                    message.content
-                  )}
+                  {message.role === "assistant" ? <ReactMarkdown>{message.content}</ReactMarkdown> : message.content}
                 </div>
               </div>
             ))
@@ -385,16 +255,8 @@ export function AiPanel({
             maxRows={4}
             disabled={status === "streaming"}
           />
-          <button
-            className="puck-ai-send"
-            onClick={handleSend}
-            disabled={!input.trim() || status === "streaming"}
-          >
-            {status === "streaming" ? (
-              <Loader2 size={20} className="animate-spin" />
-            ) : (
-              <Send size={20} />
-            )}
+          <button className="puck-ai-send" onClick={handleSend} disabled={!input.trim() || status === "streaming"}>
+            {status === "streaming" ? <Loader2 size={20} className="animate-spin" /> : <Send size={20} />}
           </button>
         </div>
       </div>
@@ -403,36 +265,20 @@ export function AiPanel({
 }
 
 // Preview wrapper
-export function AiPreviewWrapper({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement {
-  return (<>{children}</>) as ReactElement;
+export function AiPreviewWrapper({ children }: { children: ReactNode }): ReactElement {
+  return <>{children}</> as ReactElement;
 }
 
 // Main plugin factory
 export function createAiPlugin(opts: AiPluginProps = {}): Plugin {
-  const {
-    host = "/api/puck/chat",
-    chat,
-    scrollTracking = true,
-    prepareRequest,
-  } = opts;
+  const { host = "/api/puck/chat", chat, scrollTracking = true, prepareRequest } = opts;
 
   return {
     label: "AI",
     name: "ai",
     icon: <Sparkles size={16} />,
     mobilePanelHeight: "min-content",
-    render: (): ReactElement => (
-      <AiPanel
-        host={host}
-        chat={chat}
-        scrollTracking={scrollTracking}
-        prepareRequest={prepareRequest}
-      />
-    ),
+    render: (): ReactElement => <AiPanel host={host} chat={chat} scrollTracking={scrollTracking} prepareRequest={prepareRequest} />,
     overrides: { preview: AiPreviewWrapper },
   };
 }
