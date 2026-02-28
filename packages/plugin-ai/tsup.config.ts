@@ -1,10 +1,8 @@
 import { defineConfig } from "tsup";
+import tsupconfig from "../tsup-config";
 
 export default defineConfig({
-  format: ["cjs", "esm"],
-  dts: true,
-  external: ["react", "react-dom", "@puckeditor/core"],
-  injectStyle: true,
+  ...tsupconfig,
   minify: false,
   sourcemap: true,
 });

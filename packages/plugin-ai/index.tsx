@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { useStickToBottom } from "use-stick-to-bottom";
 import { Sparkles, Send, Loader2, User, Bot } from "lucide-react";
+import "./styles.css";
 
 // Type definitions
 export type JSONSchema = {
@@ -120,30 +121,6 @@ declare global {
   }
 }
 
-// CSS styles
-const css = `
-.puck-ai-panel { display: flex; flex-direction: column; height: 100%; font-family: system-ui, -apple-system, sans-serif; }
-.puck-ai-messages { flex: 1; overflow-y: auto; padding: 16px; }
-.puck-ai-message { margin-bottom: 16px; display: flex; gap: 12px; }
-.puck-ai-message.user { flex-direction: row-reverse; }
-.puck-ai-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.puck-ai-avatar.user { background: #3b82f6; color: white; }
-.puck-ai-avatar.assistant { background: #10b981; color: white; }
-.puck-ai-content { max-width: 80%; padding: 12px 16px; border-radius: 12px; line-height: 1.5; }
-.puck-ai-message.user .puck-ai-content { background: #3b82f6; color: white; }
-.puck-ai-message.assistant .puck-ai-content { background: #f3f4f6; color: #1f2937; }
-.puck-ai-input-area { padding: 16px; border-top: 1px solid #e5e7eb; }
-.puck-ai-input-wrapper { display: flex; gap: 8px; align-items: flex-end; }
-.puck-ai-input { flex: 1; resize: none; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: 14px; outline: none; font-family: inherit; }
-.puck-ai-input:focus { border-color: #3b82f6; }
-.puck-ai-send { padding: 12px; border: none; border-radius: 8px; background: #3b82f6; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-.puck-ai-send:disabled { opacity: 0.5; cursor: not-allowed; }
-.puck-ai-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6b7280; text-align: center; padding: 24px; }
-.puck-ai-empty-icon { margin-bottom: 16px; color: #9ca3af; }
-.puck-ai-example-prompts { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
-.puck-ai-example-prompt { padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; font-size: 14px; color: #374151; }
-.puck-ai-example-prompt:hover { background: #f3f4f6; border-color: #d1d5db; }
-`;
 
 // Generate unique ID
 const generateId = () => `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -234,7 +211,6 @@ export function AiPanel({ host = "/api/puck/chat", chat, scrollTracking = true, 
 
   return (
     <div className="puck-ai-panel">
-      <style>{css}</style>
       <div className="puck-ai-messages" ref={scrollRef}>
         <div ref={contentRef}>
           {messages.length === 0 ? (
