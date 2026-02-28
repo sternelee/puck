@@ -20,7 +20,7 @@ export const DrawerItemInner = ({
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
   name: string;
   label?: string;
-  dragRef?: Ref<any>;
+  dragRef?: Ref<HTMLDivElement>;
   isDragDisabled?: boolean;
 }) => {
   const CustomInner = useMemo(

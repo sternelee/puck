@@ -5,7 +5,6 @@
   "repository": "puckeditor/puck",
   "bugs": "https://github.com/puckeditor/puck/issues",
   "homepage": "https://puckeditor.com",
-  "private": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -19,7 +18,7 @@
   "scripts": {
     "lint": "eslint \"**/*.ts*\"",
     "build": "rm -rf dist && tsup index.ts",
-    "prepare": "yarn build"
+    "prepare": "pnpm build"
   },
   "files": [
     "dist"
@@ -30,10 +29,10 @@
     "@types/react": "^19.0.1",
     "@types/react-dom": "^19.0.2",
     "eslint": "^7.32.0",
-    "eslint-config-custom": "*",
-    "tsconfig": "*",
+    "eslint-config-custom": "workspace:*",
+    "tsconfig": "workspace:*",
     "tsup": "^8.2.4",
-    "tsup-config": "*",
+    "tsup-config": "workspace:*",
     "typescript": "^5.5.4"
   },
   "dependencies": {

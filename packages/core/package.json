@@ -1,6 +1,6 @@
 {
   "name": "@puckeditor/core",
-  "version": "0.21.1",
+  "version": "0.21.1-local",
   "description": "The open-source visual editor for React",
   "author": "Chris Villa <chris@puckeditor.com>",
   "repository": "puckeditor/puck",
@@ -24,7 +24,6 @@
     "typescript",
     "WYSIWYG"
   ],
-  "private": false,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -67,7 +66,7 @@
     "lint": "eslint \"**/*.ts*\"",
     "build": "rm -rf dist && tsup bundle/index.ts bundle/rsc.tsx bundle/no-external.ts bundle/internal.ts",
     "test": "jest",
-    "prepare": "cp ../../README.md . && yarn build",
+    "prepare": "cp ../../README.md . && pnpm build",
     "postpublish": "rm README.md"
   },
   "files": [
@@ -86,15 +85,15 @@
     "@types/uuid": "^10.0.0",
     "css-box-model": "^1.2.1",
     "eslint": "^7.32.0",
-    "eslint-config-custom": "*",
+    "eslint-config-custom": "workspace:*",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.0-beta.3",
     "lucide-react": "^0.468.0",
     "ts-jest": "^29.3.4",
-    "tsconfig": "*",
+    "tsconfig": "workspace:*",
     "tsup": "^8.2.4",
-    "tsup-config": "*",
+    "tsup-config": "workspace:*",
     "typescript": "^5.5.4"
   },
   "dependencies": {

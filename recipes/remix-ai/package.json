@@ -11,8 +11,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "@puckeditor/core": "*",
     "@puckeditor/cloud-client": "^0.5.0",
+    "@puckeditor/core": "workspace:*",
     "@puckeditor/plugin-ai": "^0.5.0",
     "@remix-run/css-bundle": "^2.2.0",
     "@remix-run/node": "^2.2.0",
