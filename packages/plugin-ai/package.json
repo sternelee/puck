@@ -30,8 +30,13 @@
     "dist"
   ],
   "dependencies": {
+    "@ai-sdk/react": "^3.0.63",
+    "ai": "^6.0.61",
+    "html2canvas-pro": "^1.5.13",
+    "qler": "^0.6.2",
     "react-markdown": "^10.1.0",
     "react-textarea-autosize": "^8.5.9",
+    "ulid": "^3.0.1",
     "use-stick-to-bottom": "^1.1.1"
   },
   "devDependencies": {
