@@ -29,13 +29,47 @@ import {
   ArrowUp,
   Bot,
   Check,
+  Image as ImageIcon,
   RotateCcw,
   TriangleAlert,
+  X,
 } from "lucide-react";
 import qler from "qler";
 import { ulid } from "ulid";
 import html2canvas from "html2canvas-pro";
 import "./styles.css";
+
+// ============================================================
+// Image attachment helpers
+// ============================================================
+
+export interface AttachedImage {
+  /** Unique key for React lists */
+  id: string;
+  /** base64 data URL e.g. "data:image/png;base64,..." */
+  dataUrl: string;
+  /** Original file name */
+  name: string;
+}
+
+function readFileAsDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function filesToAttachedImages(files: FileList | File[]): Promise<AttachedImage[]> {
+  const results: AttachedImage[] = [];
+  for (const file of Array.from(files)) {
+    if (!file.type.startsWith("image/")) continue;
+    const dataUrl = await readFileAsDataURL(file);
+    results.push({ id: prefixedUlid("img"), dataUrl, name: file.name });
+  }
+  return results;
+}
 
 // ============================================================
 // Type definitions
@@ -536,6 +570,8 @@ function PromptForm({
   minRows = 2,
   maxRows = 5,
   value = "",
+  images = [],
+  onImagesChange,
 }: {
   handleSubmit: (prompt: string) => void;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -545,10 +581,14 @@ function PromptForm({
   minRows?: number;
   maxRows?: number;
   value?: string;
+  images?: AttachedImage[];
+  onImagesChange?: (imgs: AttachedImage[]) => void;
 }) {
   const [prompt, setPrompt] = useState(value);
+  const [isDragOver, setIsDragOver] = useState(false);
   const hasSetInitialPrompt = useRef(false);
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     setPrompt(value);
@@ -563,39 +603,110 @@ function PromptForm({
     }
   }, []);
 
+  const addImages = useCallback(async (files: FileList | File[]) => {
+    const newImgs = await filesToAttachedImages(files);
+    if (newImgs.length > 0) {
+      onImagesChange?.([...images, ...newImgs]);
+    }
+  }, [images, onImagesChange]);
+
+  const removeImage = useCallback((id: string) => {
+    onImagesChange?.(images.filter((img) => img.id !== id));
+  }, [images, onImagesChange]);
+
   const sendPrompt = () => {
     if (isLoading) return;
-    if (prompt.trim()) {
+    if (prompt.trim() || images.length > 0) {
       handleSubmit(prompt);
     }
     setPrompt("");
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.some((t) => t === "Files")) {
+      setIsDragOver(true);
+    }
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (e.dataTransfer.files.length > 0) {
+      await addImages(e.dataTransfer.files);
+    }
   };
 
   const classNames = [
     "puck-ai-prompt-form",
     glow ? "puck-ai-prompt-form--glow" : "",
     isLoading ? "puck-ai-prompt-form--is-loading" : "",
+    isDragOver ? "puck-ai-prompt-form--drag-over" : "",
   ]
     .filter(Boolean)
     .join(" ");
 
   return (
-    <div className={classNames}>
+    <div
+      className={classNames}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="puck-ai-prompt-form-inner">
         <span className="puck-ai-prompt-form-glow" />
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          multiple
+          style={{ display: "none" }}
+          onChange={async (e) => {
+            if (e.target.files) {
+              await addImages(e.target.files);
+              e.target.value = "";
+            }
+          }}
+        />
         <form
           onSubmit={(e) => {
             e.preventDefault();
             sendPrompt();
           }}
         >
+          {/* Image thumbnails strip */}
+          {images.length > 0 && (
+            <div className="puck-ai-image-thumbnails">
+              {images.map((img) => (
+                <div key={img.id} className="puck-ai-image-thumbnail">
+                  <img src={img.dataUrl} alt={img.name} />
+                  <button
+                    type="button"
+                    className="puck-ai-image-thumbnail-remove"
+                    onClick={() => removeImage(img.id)}
+                    title="Remove image"
+                  >
+                    <X size={10} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="puck-ai-prompt-form-form-inner">
             <TextareaAutosize
               className="puck-ai-prompt-form-input"
               name="prompt"
               minRows={minRows}
               maxRows={maxRows}
-              placeholder={placeholder}
+              placeholder={
+                isDragOver ? "Drop images here…" : placeholder
+              }
               disabled={isLoading}
               value={prompt}
               ref={(node) => {
@@ -624,7 +735,17 @@ function PromptForm({
               <div
                 className="puck-ai-prompt-form-actions-left"
                 onClick={(e) => e.stopPropagation()}
-              />
+              >
+                <button
+                  type="button"
+                  className="puck-ai-image-attach-btn"
+                  title="Attach image"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                >
+                  <ImageIcon size={15} />
+                </button>
+              </div>
               <div
                 className="puck-ai-prompt-form-actions-right"
                 onClick={(e) => e.stopPropagation()}
@@ -662,6 +783,8 @@ function ChatBody({
   promptValue,
   targetComponent,
   onClearTarget,
+  images,
+  onImagesChange,
 }: {
   children?: ReactNode;
   examplePrompts?: ReactNode;
@@ -675,6 +798,8 @@ function ChatBody({
   promptValue?: string;
   targetComponent?: TargetComponent | null;
   onClearTarget?: () => void;
+  images?: AttachedImage[];
+  onImagesChange?: (imgs: AttachedImage[]) => void;
 }) {
   const { scrollRef, contentRef } = useStickToBottom();
   const hasMessages = messages && messages.length > 0;
@@ -753,6 +878,8 @@ function ChatBody({
                 : "What do you want to build?"
             }
             value={promptValue}
+            images={images}
+            onImagesChange={onImagesChange}
           />
           {examplePrompts ? (
             <div className="puck-ai-chatbody-example-prompts">{examplePrompts}</div>
@@ -1032,10 +1159,21 @@ export function Chat({
           messages: opts.messages,
           pageData: appState.data,
           config: configWithRoot,
-          // Read from ref to avoid stale closure — targetComponent state would
-          // always be null here because useChat captures the initial render value.
+          // Read from refs to avoid stale closures — state values captured at
+          // initial render would always be their initial values here.
           ...(targetComponentRef.current
             ? { selectedComponentId: targetComponentRef.current.id }
+            : {}),
+          // Consume (read + clear) the pending images for this request.
+          // The ref is populated synchronously in handleSubmit before sendMessage
+          // is called, so the value is always available here even though
+          // prepareSendMessagesRequest runs asynchronously after a render cycle.
+          ...(pendingSendImagesRef.current.length > 0
+            ? (() => {
+                const imgs = pendingSendImagesRef.current;
+                pendingSendImagesRef.current = [];
+                return { images: imgs };
+              })()
             : {}),
         };
 
@@ -1080,6 +1218,14 @@ export function Chat({
   );
 
   const [promptValue, setPromptValue] = useState("");
+  const [attachedImages, setAttachedImages] = useState<AttachedImage[]>([]);
+  // "Pending send" ref: populated synchronously in handleSubmit, consumed
+  // (read + cleared) inside prepareSendMessagesRequest.
+  // We intentionally do NOT use useEffect to sync this ref because
+  // useEffect runs after render — by then the SDK may already have called
+  // prepareSendMessagesRequest with a stale (empty) value.
+  const pendingSendImagesRef = useRef<string[]>([]);
+
   const [targetComponent, setTargetComponent] = useState<TargetComponent | null>(null);
   // Ref so prepareSendMessagesRequest (defined once inside useChat) always reads the latest value.
   const targetComponentRef = useRef<TargetComponent | null>(null);
@@ -1110,9 +1256,15 @@ export function Chat({
       chat.onSubmit(text);
       return;
     }
-    if (!text) return;
+    if (!text && attachedImages.length === 0) return;
     setError("");
     setPromptValue("");
+    // Synchronously snapshot images into the pending-send ref BEFORE calling
+    // setAttachedImages([]).  prepareSendMessagesRequest is async (runs after
+    // a render cycle), so we cannot rely on state or a useEffect-synced ref —
+    // they would already be cleared by then.
+    pendingSendImagesRef.current = attachedImages.map((img) => img.dataUrl);
+    setAttachedImages([]);
     // Don't clear targetComponent on submit — let it persist across follow-up messages
     (sendMessage as any)({ text }).catch((e: Error) => {
       console.error(e);
@@ -1151,6 +1303,8 @@ export function Chat({
           promptValue={promptValue}
           targetComponent={targetComponent}
           onClearTarget={() => setTargetComponent(null)}
+          images={attachedImages}
+          onImagesChange={setAttachedImages}
         >
           <Placeholder dispatch={puckDispatch} inputRef={inputRef} pluginRef={pluginRef} />
         </ChatBody>
