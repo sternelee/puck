@@ -169,38 +169,21 @@
    ============================================================ */
 
 .puck-ai-chatbody {
-  --fade-size: 32px;
   --chat-background-color: white;
   display: flex;
   flex-direction: column;
   height: 100%;
-  max-height: 100vh;
-  overflow: hidden;
-}
-
-@media (min-width: 638px) {
-  .puck-ai-chatbody {
-    max-height: none;
-  }
+  min-height: 0;
 }
 
 .puck-ai-chatbody-inner {
   background-color: var(--chat-background-color);
   display: flex;
   flex-direction: column;
-  max-height: 100%;
   position: relative;
-  overflow: hidden;
+  /* flex: 1 + min-height: 0 allows the inner to shrink and scroll correctly */
   flex: 1;
-}
-
-.puck-ai-chatbody--has-messages .puck-ai-chatbody-inner {
-  padding-top: 0;
-}
-
-.puck-ai-chatbody:not(.puck-ai-chatbody--has-children) .puck-ai-chatbody-inner {
-  height: 100%;
-  padding-top: 0;
+  min-height: 0;
 }
 
 .puck-ai-chatbody--has-messages .puck-ai-chatbody-messages {
@@ -209,10 +192,12 @@
   padding: 16px;
   overflow: auto;
   flex: 1;
+  min-height: 0;
 }
 
 .puck-ai-chatbody-messages {
   flex: 1;
+  min-height: 0;
   overflow: auto;
 }
 
@@ -276,13 +261,12 @@
 .puck-ai-chatbody-default {
   overflow-y: auto;
   flex-grow: 1;
+  min-height: 0;
 }
 
 .puck-ai-chatbody--has-messages .puck-ai-chatbody-default {
-  opacity: 0;
-  padding: 0;
-  pointer-events: none;
-  transition: opacity 250ms ease-in;
+  /* Remove from layout entirely so it doesn't steal height from the messages area */
+  display: none;
 }
 
 .puck-ai-chatbody-loader {
