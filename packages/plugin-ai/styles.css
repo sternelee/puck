@@ -394,6 +394,70 @@
 }
 
 /* ============================================================
+   Target component banner
+   ============================================================ */
+
+.puck-ai-target-banner {
+  align-items: center;
+  background: var(--puck-color-azure-11);
+  border: 1px solid var(--puck-color-azure-09);
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  font-size: var(--puck-font-size-xxxs);
+  line-height: 1.4;
+}
+
+.puck-ai-target-banner-label {
+  color: var(--puck-color-azure-05);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.puck-ai-target-banner-name {
+  color: var(--puck-color-grey-02);
+  font-weight: 600;
+}
+
+.puck-ai-target-banner-id {
+  color: var(--puck-color-grey-05);
+  font-family: var(--puck-font-family-monospaced, monospace);
+  font-size: 11px;
+  background: var(--puck-color-azure-10);
+  border-radius: 3px;
+  padding: 1px 4px;
+  /* Truncate very long IDs */
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.puck-ai-target-banner-clear {
+  appearance: none;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--puck-color-grey-06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  line-height: 1;
+  margin-left: auto;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.puck-ai-target-banner-clear:hover {
+  color: var(--puck-color-grey-02);
+}
+
+/* ============================================================
    PromptForm
    ============================================================ */
 

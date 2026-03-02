@@ -190,6 +190,12 @@ declare module "@puckeditor/core" {
   export interface BaseField { ai?: FieldAiParams }
 }
 
+export type TargetComponent = {
+  id: string;
+  type: string;
+  label?: string;
+};
+
 declare global {
   interface Window {
     __PUCK_AI: {
@@ -198,6 +204,7 @@ declare global {
       processData: (_dataPart: DataUIPart<PuckDataParts>) => void;
       setStatus: (_status: ChatStatus) => void;
       setPrompt: (_value: string) => void;
+      setTargetComponent: (_target: TargetComponent | null) => void;
     };
   }
 }
@@ -653,6 +660,8 @@ function ChatBody({
   error,
   handleRetry,
   promptValue,
+  targetComponent,
+  onClearTarget,
 }: {
   children?: ReactNode;
   examplePrompts?: ReactNode;
@@ -664,6 +673,8 @@ function ChatBody({
   error?: string;
   handleRetry?: () => void;
   promptValue?: string;
+  targetComponent?: TargetComponent | null;
+  onClearTarget?: () => void;
 }) {
   const { scrollRef, contentRef } = useStickToBottom();
   const hasMessages = messages && messages.length > 0;
@@ -708,12 +719,39 @@ function ChatBody({
           </div>
         )}
         <div className="puck-ai-chatbody-form">
+          {targetComponent && (
+            <div className="puck-ai-target-banner">
+              <span className="puck-ai-target-banner-label">
+                Targeting:
+              </span>
+              <span className="puck-ai-target-banner-name">
+                {targetComponent.label || targetComponent.type}
+              </span>
+              <code className="puck-ai-target-banner-id">
+                {targetComponent.id}
+              </code>
+              {onClearTarget && (
+                <button
+                  className="puck-ai-target-banner-clear"
+                  onClick={onClearTarget}
+                  title="Clear target"
+                  type="button"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          )}
           <PromptForm
-            glow={!hasMessages}
+            glow={!hasMessages && !targetComponent}
             handleSubmit={handleSubmit}
             inputRef={inputRef}
             isLoading={status === "submitted" || status === "streaming"}
-            placeholder="What do you want to build?"
+            placeholder={
+              targetComponent
+                ? `What should I do with the ${targetComponent.label || targetComponent.type}?`
+                : "What do you want to build?"
+            }
             value={promptValue}
           />
           {examplePrompts ? (
@@ -994,6 +1032,11 @@ export function Chat({
           messages: opts.messages,
           pageData: appState.data,
           config: configWithRoot,
+          // Read from ref to avoid stale closure — targetComponent state would
+          // always be null here because useChat captures the initial render value.
+          ...(targetComponentRef.current
+            ? { selectedComponentId: targetComponentRef.current.id }
+            : {}),
         };
 
         const defaultOptions: RequestOptions = {
@@ -1037,6 +1080,12 @@ export function Chat({
   );
 
   const [promptValue, setPromptValue] = useState("");
+  const [targetComponent, setTargetComponent] = useState<TargetComponent | null>(null);
+  // Ref so prepareSendMessagesRequest (defined once inside useChat) always reads the latest value.
+  const targetComponentRef = useRef<TargetComponent | null>(null);
+  useEffect(() => {
+    targetComponentRef.current = targetComponent;
+  }, [targetComponent]);
 
   useEffect(() => {
     window.__PUCK_AI = {
@@ -1046,6 +1095,10 @@ export function Chat({
       sendMessage: sendMessage as any,
       setPrompt: (value: string) => {
         setPromptValue(value);
+        inputRef.current?.focus();
+      },
+      setTargetComponent: (target: TargetComponent | null) => {
+        setTargetComponent(target);
         inputRef.current?.focus();
       },
     };
@@ -1060,6 +1113,7 @@ export function Chat({
     if (!text) return;
     setError("");
     setPromptValue("");
+    // Don't clear targetComponent on submit — let it persist across follow-up messages
     (sendMessage as any)({ text }).catch((e: Error) => {
       console.error(e);
     });
@@ -1095,6 +1149,8 @@ export function Chat({
             regenerate();
           }}
           promptValue={promptValue}
+          targetComponent={targetComponent}
+          onClearTarget={() => setTargetComponent(null)}
         >
           <Placeholder dispatch={puckDispatch} inputRef={inputRef} pluginRef={pluginRef} />
         </ChatBody>

@@ -427,7 +427,7 @@ export const DraggableComponent = ({
   }, [index, zoneCompound]);
 
   const onAiEdit = useCallback(() => {
-    // Ensure the component is selected
+    // Select the component and navigate to the AI panel
     dispatch({
       type: "setUi",
       ui: {
@@ -437,14 +437,25 @@ export const DraggableComponent = ({
       },
     });
 
-    // Pre-fill the AI prompt with context about this specific component
+    // Pass the unique component ID + type so the AI can unambiguously
+    // target this specific instance even among duplicate block types
     requestAnimationFrame(() => {
       const puckAi = (window as any).__PUCK_AI as
-        | { setPrompt?: (v: string) => void }
+        | {
+            setTargetComponent?: (t: {
+              id: string;
+              type: string;
+              label?: string;
+            } | null) => void;
+          }
         | undefined;
-      puckAi?.setPrompt?.(`Modify the ${label || componentType} block`);
+      puckAi?.setTargetComponent?.({
+        id,
+        type: componentType,
+        label: label || componentType,
+      });
     });
-  }, [index, zoneCompound, label, componentType]);
+  }, [id, index, zoneCompound, label, componentType]);
 
   const [hover, setHover] = useState(false);
 
