@@ -1,6 +1,6 @@
 {
   "name": "puckeditor-plugin-ai",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": "Chris Villa <chris@puckeditor.com>",
   "repository": "puckeditor/puck",
   "bugs": "https://github.com/puckeditor/puck/issues",
@@ -40,7 +40,7 @@
     "use-stick-to-bottom": "^1.1.1"
   },
   "devDependencies": {
-    "@puckeditor/core": "workspace:*",
+    "puckeditor-core": "workspace:*",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
@@ -53,7 +53,7 @@
     "typescript": "^5.5.4"
   },
   "peerDependencies": {
-    "@puckeditor/core": "^0.21.0",
+    "puckeditor-core": "^0.21.0",
     "react": "^18.0.0 || ^19.0.0"
   }
 }
