@@ -14,7 +14,7 @@ import {
 import styles from "./styles.module.css";
 import "./styles.css";
 import getClassNameFactory from "../../lib/get-class-name-factory";
-import { Copy, CornerLeftUp, Trash } from "lucide-react";
+import { Copy, CornerLeftUp, Sparkles, Trash } from "lucide-react";
 import { useAppStore, useAppStoreApi } from "../../store";
 import { Loader } from "../Loader";
 import { ActionBar } from "../ActionBar";
@@ -119,6 +119,9 @@ export const DraggableComponent = ({
   const overrides = useAppStore((s) => s.overrides);
   const dispatch = useAppStore((s) => s.dispatch);
   const iframe = useAppStore((s) => s.iframe);
+  const hasAiPlugin = useAppStore((s) =>
+    s.plugins.some((p) => p.name === "ai")
+  );
 
   const ctx = useContext(dropZoneContext);
 
@@ -423,6 +426,26 @@ export const DraggableComponent = ({
     });
   }, [index, zoneCompound]);
 
+  const onAiEdit = useCallback(() => {
+    // Ensure the component is selected
+    dispatch({
+      type: "setUi",
+      ui: {
+        itemSelector: { index, zone: zoneCompound },
+        plugin: { current: "ai" },
+        leftSideBarVisible: true,
+      },
+    });
+
+    // Pre-fill the AI prompt with context about this specific component
+    requestAnimationFrame(() => {
+      const puckAi = (window as any).__PUCK_AI as
+        | { setPrompt?: (v: string) => void }
+        | undefined;
+      puckAi?.setPrompt?.(`Modify the ${label || componentType} block`);
+    });
+  }, [index, zoneCompound, label, componentType]);
+
   const [hover, setHover] = useState(false);
 
   const indicativeHover = useContextStore(
@@ -612,7 +635,8 @@ export const DraggableComponent = ({
     s.currentRichText?.inlineComponentId === id ? s.currentRichText : null
   );
 
-  const hasNormalActions = permissions.duplicate || permissions.delete;
+  const hasNormalActions =
+    permissions.duplicate || permissions.delete || hasAiPlugin;
 
   return (
     <DropZoneProvider value={nextContextValue}>
@@ -667,6 +691,13 @@ export const DraggableComponent = ({
                     </>
                   )}
 
+                  {hasAiPlugin && (
+                    <ActionBar.Action onClick={onAiEdit} label="Edit with AI">
+                      <Sparkles size={16} />
+                    </ActionBar.Action>
+                  )}
+                  {(permissions.duplicate || permissions.delete) &&
+                    hasAiPlugin && <ActionBar.Separator />}
                   {permissions.duplicate && (
                     <ActionBar.Action onClick={onDuplicate} label="Duplicate">
                       <Copy size={16} />

@@ -197,6 +197,7 @@ declare global {
       setMessages: (_messages: PuckMessage[]) => void;
       processData: (_dataPart: DataUIPart<PuckDataParts>) => void;
       setStatus: (_status: ChatStatus) => void;
+      setPrompt: (_value: string) => void;
     };
   }
 }
@@ -527,6 +528,7 @@ function PromptForm({
   placeholder = "What do you want to build?",
   minRows = 2,
   maxRows = 5,
+  value = "",
 }: {
   handleSubmit: (prompt: string) => void;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -535,10 +537,15 @@ function PromptForm({
   placeholder?: string;
   minRows?: number;
   maxRows?: number;
+  value?: string;
 }) {
-  const [prompt, setPrompt] = useState("");
+  const [prompt, setPrompt] = useState(value);
   const hasSetInitialPrompt = useRef(false);
   const internalRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useEffect(() => {
+    setPrompt(value);
+  }, [value]);
 
   useEffect(() => {
     const currentUrl = new URL(location.href);
@@ -645,6 +652,7 @@ function ChatBody({
   status,
   error,
   handleRetry,
+  promptValue,
 }: {
   children?: ReactNode;
   examplePrompts?: ReactNode;
@@ -655,6 +663,7 @@ function ChatBody({
   status: ChatStatus;
   error?: string;
   handleRetry?: () => void;
+  promptValue?: string;
 }) {
   const { scrollRef, contentRef } = useStickToBottom();
   const hasMessages = messages && messages.length > 0;
@@ -705,6 +714,7 @@ function ChatBody({
             inputRef={inputRef}
             isLoading={status === "submitted" || status === "streaming"}
             placeholder="What do you want to build?"
+            value={promptValue}
           />
           {examplePrompts ? (
             <div className="puck-ai-chatbody-example-prompts">{examplePrompts}</div>
@@ -1026,12 +1036,18 @@ export function Chat({
     [status, forcedStatus]
   );
 
+  const [promptValue, setPromptValue] = useState("");
+
   useEffect(() => {
     window.__PUCK_AI = {
       processData: processData as any,
       setMessages: setMessages as any,
       setStatus: setForcedStatus,
       sendMessage: sendMessage as any,
+      setPrompt: (value: string) => {
+        setPromptValue(value);
+        inputRef.current?.focus();
+      },
     };
   }, [processData, setMessages, sendMessage]);
 
@@ -1043,6 +1059,7 @@ export function Chat({
     }
     if (!text) return;
     setError("");
+    setPromptValue("");
     (sendMessage as any)({ text }).catch((e: Error) => {
       console.error(e);
     });
@@ -1077,6 +1094,7 @@ export function Chat({
             setError("");
             regenerate();
           }}
+          promptValue={promptValue}
         >
           <Placeholder dispatch={puckDispatch} inputRef={inputRef} pluginRef={pluginRef} />
         </ChatBody>
