@@ -11,8 +11,8 @@ import {
   type ReactNode,
   type ReactElement,
 } from "react";
-import type { PuckAction, Data, Config, Plugin } from "@puckeditor/core";
-import { useGetPuck, createUsePuck } from "@puckeditor/core";
+import type { PuckAction, Data, Config, Plugin } from "puckeditor-core";
+import { useGetPuck, createUsePuck } from "puckeditor-core";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
@@ -61,7 +61,9 @@ function readFileAsDataURL(file: File): Promise<string> {
   });
 }
 
-async function filesToAttachedImages(files: FileList | File[]): Promise<AttachedImage[]> {
+async function filesToAttachedImages(
+  files: FileList | File[]
+): Promise<AttachedImage[]> {
   const results: AttachedImage[] = [];
   for (const file of Array.from(files)) {
     if (!file.type.startsWith("image/")) continue;
@@ -82,7 +84,14 @@ export type JSONSchema = {
   $id?: string;
   $ref?: string;
   $defs?: Record<string, JSONSchema>;
-  type?: "object" | "array" | "string" | "number" | "boolean" | "null" | "integer";
+  type?:
+    | "object"
+    | "array"
+    | "string"
+    | "number"
+    | "boolean"
+    | "null"
+    | "integer";
   additionalItems?: _JSONSchema;
   unevaluatedItems?: _JSONSchema;
   prefixItems?: _JSONSchema[];
@@ -151,16 +160,39 @@ export type FieldAiParams = {
   bind?: string;
 };
 
-export type AddOperation = { op: "add"; id: string; index: number; zone: string; type: string; props: object };
+export type AddOperation = {
+  op: "add";
+  id: string;
+  index: number;
+  zone: string;
+  type: string;
+  props: object;
+};
 export type UpdateOperation = { op: "update"; id: string; props: object };
 export type UpdateRootOperation = { op: "updateRoot"; props: object };
-export type MoveOperation = { op: "move"; zone: string; id: string; index: number };
+export type MoveOperation = {
+  op: "move";
+  zone: string;
+  id: string;
+  index: number;
+};
 export type DeleteOperation = { op: "delete"; id: string };
 export type DuplicateOperation = { op: "duplicate"; id: string };
 export type ResetOperation = { op: "reset" };
-export type Operation = AddOperation | UpdateOperation | UpdateRootOperation | MoveOperation | DeleteOperation | DuplicateOperation | ResetOperation;
+export type Operation =
+  | AddOperation
+  | UpdateOperation
+  | UpdateRootOperation
+  | MoveOperation
+  | DeleteOperation
+  | DuplicateOperation
+  | ResetOperation;
 
-export type ToolStatus = { loading: boolean; label: string; error?: { message: string } };
+export type ToolStatus = {
+  loading: boolean;
+  label: string;
+  error?: { message: string };
+};
 export type DataToolStatus = { status: ToolStatus; toolCallId: string };
 
 type TokenUsage = {
@@ -213,15 +245,25 @@ export type AiPluginProps = {
     examplePrompts?: { label: string; href?: string; onClick?: () => void }[];
   };
   scrollTracking?: boolean;
-  prepareRequest?: (opts: RequestOptions) => RequestOptions | Promise<RequestOptions>;
+  prepareRequest?: (
+    opts: RequestOptions
+  ) => RequestOptions | Promise<RequestOptions>;
 };
 
-// Extend @puckeditor/core types
-declare module "@puckeditor/core" {
-  export interface ComponentMetadata { ai?: ComponentAiParams }
-  export interface ComponentConfigExtensions { ai?: ComponentAiParams }
-  export interface FieldMetadata { ai?: FieldAiParams }
-  export interface BaseField { ai?: FieldAiParams }
+// Extend puckeditor-core types
+declare module "puckeditor-core" {
+  export interface ComponentMetadata {
+    ai?: ComponentAiParams;
+  }
+  export interface ComponentConfigExtensions {
+    ai?: ComponentAiParams;
+  }
+  export interface FieldMetadata {
+    ai?: FieldAiParams;
+  }
+  export interface BaseField {
+    ai?: FieldAiParams;
+  }
 }
 
 export type TargetComponent = {
@@ -263,7 +305,8 @@ const getSelectorForId = (state: any, id: string) => {
   return { zone: zoneCompound, index };
 };
 
-const getItemById = (state: any, id: string) => state?.indexes?.nodes?.[id]?.data;
+const getItemById = (state: any, id: string) =>
+  state?.indexes?.nodes?.[id]?.data;
 
 const applyArrayDefaults = (oldProps: any, newProps: any, fields: any) => {
   const updatedProps = { ...oldProps, ...newProps };
@@ -272,25 +315,28 @@ const applyArrayDefaults = (oldProps: any, newProps: any, fields: any) => {
     if (field.type === "array") {
       const arrayField = field;
       const arrayFields = arrayField.arrayFields;
-      updatedProps[fieldName] = (updatedProps[fieldName] || []).map((item: any, index: number) => {
-        const newItem: any = {};
-        const defaultValue =
-          typeof arrayField.defaultItemProps === "function"
-            ? arrayField.defaultItemProps(index)
-            : arrayField.defaultItemProps;
-        for (const arrayFieldName in arrayFields) {
-          const subField = arrayFields[arrayFieldName];
-          if (subField.type === "slot") {
-            newItem[arrayFieldName] =
-              item[arrayFieldName] ??
-              oldProps[fieldName]?.[index]?.[arrayFieldName] ??
-              defaultValue?.[arrayFieldName];
-          } else {
-            newItem[arrayFieldName] = item[arrayFieldName] ?? defaultValue?.[arrayFieldName];
+      updatedProps[fieldName] = (updatedProps[fieldName] || []).map(
+        (item: any, index: number) => {
+          const newItem: any = {};
+          const defaultValue =
+            typeof arrayField.defaultItemProps === "function"
+              ? arrayField.defaultItemProps(index)
+              : arrayField.defaultItemProps;
+          for (const arrayFieldName in arrayFields) {
+            const subField = arrayFields[arrayFieldName];
+            if (subField.type === "slot") {
+              newItem[arrayFieldName] =
+                item[arrayFieldName] ??
+                oldProps[fieldName]?.[index]?.[arrayFieldName] ??
+                defaultValue?.[arrayFieldName];
+            } else {
+              newItem[arrayFieldName] =
+                item[arrayFieldName] ?? defaultValue?.[arrayFieldName];
+            }
           }
+          return newItem;
         }
-        return newItem;
-      });
+      );
     }
   }
   return updatedProps;
@@ -298,7 +344,15 @@ const applyArrayDefaults = (oldProps: any, newProps: any, fields: any) => {
 
 const dispatchOp = (
   operation: Operation,
-  { getState, dispatchAction, config }: { getState: () => any; dispatchAction: (action: any) => void; config: Config }
+  {
+    getState,
+    dispatchAction,
+    config,
+  }: {
+    getState: () => any;
+    dispatchAction: (action: any) => void;
+    config: Config;
+  }
 ) => {
   const state = getState();
   try {
@@ -314,7 +368,9 @@ const dispatchOp = (
         });
         const existing = getItemById(getState(), operation.id);
         if (!existing) {
-          throw new Error(`Tried to update an item that doesn't exist: ${operation.id}`);
+          throw new Error(
+            `Tried to update an item that doesn't exist: ${operation.id}`
+          );
         }
         const newData = {
           ...existing,
@@ -336,7 +392,9 @@ const dispatchOp = (
       const selector = getSelectorForId(state, operation.id);
       const existing = getItemById(state, operation.id);
       if (!selector || !existing) {
-        throw new Error(`Tried to update an item that doesn't exist: ${operation.id}`);
+        throw new Error(
+          `Tried to update an item that doesn't exist: ${operation.id}`
+        );
       }
       const newData = {
         ...existing,
@@ -371,7 +429,9 @@ const dispatchOp = (
     } else if (operation.op === "delete") {
       const selector = getSelectorForId(state, operation.id);
       if (!selector) {
-        throw new Error(`Tried to delete an item that doesn't exist: ${operation.id}`);
+        throw new Error(
+          `Tried to delete an item that doesn't exist: ${operation.id}`
+        );
       }
       dispatchAction({
         type: "remove",
@@ -382,7 +442,9 @@ const dispatchOp = (
     } else if (operation.op === "duplicate") {
       const selector = getSelectorForId(state, operation.id);
       if (!selector) {
-        throw new Error(`Tried to duplicate an item that doesn't exist: ${operation.id}`);
+        throw new Error(
+          `Tried to duplicate an item that doesn't exist: ${operation.id}`
+        );
       }
       dispatchAction({
         type: "duplicate",
@@ -393,7 +455,9 @@ const dispatchOp = (
     } else if (operation.op === "move") {
       const selector = getSelectorForId(state, operation.id);
       if (!selector) {
-        throw new Error(`Tried to move an item that doesn't exist: ${operation.id}`);
+        throw new Error(
+          `Tried to move an item that doesn't exist: ${operation.id}`
+        );
       }
       dispatchAction({
         type: "move",
@@ -519,7 +583,9 @@ function ChatMessage({ message }: { message: PuckMessage }) {
   const { role, parts } = message;
   return (
     <div
-      className={`puck-ai-chat-message${role === "user" ? " puck-ai-chat-message--user-role" : ""}`}
+      className={`puck-ai-chat-message${
+        role === "user" ? " puck-ai-chat-message--user-role" : ""
+      }`}
       data-message-id={message.id}
     >
       {parts.map((part: any, i: number) => (
@@ -548,7 +614,11 @@ function ExamplePrompt({
 }) {
   const El = href ? "a" : "button";
   return (
-    <El className="puck-ai-chatbody-example-prompt" href={href as any} onClick={onClick}>
+    <El
+      className="puck-ai-chatbody-example-prompt"
+      href={href as any}
+      onClick={onClick}
+    >
       <div>{label}</div>
       <div className="puck-ai-chatbody-example-prompt-arrow">
         <ArrowUp size={16} />
@@ -603,16 +673,22 @@ function PromptForm({
     }
   }, []);
 
-  const addImages = useCallback(async (files: FileList | File[]) => {
-    const newImgs = await filesToAttachedImages(files);
-    if (newImgs.length > 0) {
-      onImagesChange?.([...images, ...newImgs]);
-    }
-  }, [images, onImagesChange]);
+  const addImages = useCallback(
+    async (files: FileList | File[]) => {
+      const newImgs = await filesToAttachedImages(files);
+      if (newImgs.length > 0) {
+        onImagesChange?.([...images, ...newImgs]);
+      }
+    },
+    [images, onImagesChange]
+  );
 
-  const removeImage = useCallback((id: string) => {
-    onImagesChange?.(images.filter((img) => img.id !== id));
-  }, [images, onImagesChange]);
+  const removeImage = useCallback(
+    (id: string) => {
+      onImagesChange?.(images.filter((img) => img.id !== id));
+    },
+    [images, onImagesChange]
+  );
 
   const sendPrompt = () => {
     if (isLoading) return;
@@ -704,14 +780,14 @@ function PromptForm({
               name="prompt"
               minRows={minRows}
               maxRows={maxRows}
-              placeholder={
-                isDragOver ? "Drop images here…" : placeholder
-              }
+              placeholder={isDragOver ? "Drop images here…" : placeholder}
               disabled={isLoading}
               value={prompt}
               ref={(node) => {
                 if (inputRef) {
-                  (inputRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
+                  (
+                    inputRef as React.MutableRefObject<HTMLTextAreaElement | null>
+                  ).current = node;
                 }
                 internalRef.current = node;
               }}
@@ -815,7 +891,9 @@ function ChatBody({
 
   return (
     <div className={classNames}>
-      {children ? <div className="puck-ai-chatbody-default">{children}</div> : null}
+      {children ? (
+        <div className="puck-ai-chatbody-default">{children}</div>
+      ) : null}
       <div className="puck-ai-chatbody-inner" ref={scrollRef}>
         <div className="puck-ai-chatbody-messages" ref={contentRef}>
           {[...messages].reverse().map((message) => (
@@ -829,7 +907,9 @@ function ChatBody({
         )}
         {error && (
           <div className="puck-ai-chatbody-error">
-            <div className="puck-ai-chatbody-error-label">Something went wrong.</div>
+            <div className="puck-ai-chatbody-error-label">
+              Something went wrong.
+            </div>
             {handleRetry && (
               <div className="puck-ai-chatbody-error-action">
                 <button
@@ -846,9 +926,7 @@ function ChatBody({
         <div className="puck-ai-chatbody-form">
           {targetComponent && (
             <div className="puck-ai-target-banner">
-              <span className="puck-ai-target-banner-label">
-                Targeting:
-              </span>
+              <span className="puck-ai-target-banner-label">Targeting:</span>
               <span className="puck-ai-target-banner-name">
                 {targetComponent.label || targetComponent.type}
               </span>
@@ -874,7 +952,9 @@ function ChatBody({
             isLoading={status === "submitted" || status === "streaming"}
             placeholder={
               targetComponent
-                ? `What should I do with the ${targetComponent.label || targetComponent.type}?`
+                ? `What should I do with the ${
+                    targetComponent.label || targetComponent.type
+                  }?`
                 : "What do you want to build?"
             }
             value={promptValue}
@@ -882,7 +962,9 @@ function ChatBody({
             onImagesChange={onImagesChange}
           />
           {examplePrompts ? (
-            <div className="puck-ai-chatbody-example-prompts">{examplePrompts}</div>
+            <div className="puck-ai-chatbody-example-prompts">
+              {examplePrompts}
+            </div>
           ) : null}
         </div>
       </div>
@@ -911,7 +993,11 @@ function Placeholder({
   const handleEnterPromptClick = () => {
     inputRef.current?.focus({ preventScroll: true });
     setTimeout(() => {
-      if (pluginRef.current && inputRef.current && !isScrolledIntoView(inputRef.current)) {
+      if (
+        pluginRef.current &&
+        inputRef.current &&
+        !isScrolledIntoView(inputRef.current)
+      ) {
         const box = pluginRef.current.getBoundingClientRect();
         const top = box.top - (window.innerHeight - box.height) / 2;
         window.scrollTo({ behavior: "smooth", top });
@@ -924,7 +1010,10 @@ function Placeholder({
       <Bot size={24} />
       <div>Use AI to build a page using the available blocks</div>
       <div className="puck-ai-chat-actions">
-        <button className="puck-ai-chat-action" onClick={handleEnterPromptClick}>
+        <button
+          className="puck-ai-chat-action"
+          onClick={handleEnterPromptClick}
+        >
           Enter prompt
         </button>
         <button
@@ -944,7 +1033,11 @@ function Placeholder({
 // ScrollTracking
 // ============================================================
 
-function scrollIntoViewLocal(el: Element, win: Window, behavior: ScrollBehavior = "smooth") {
+function scrollIntoViewLocal(
+  el: Element,
+  win: Window,
+  behavior: ScrollBehavior = "smooth"
+) {
   const scroller =
     (el.ownerDocument?.scrollingElement as HTMLElement) ||
     (el.ownerDocument?.documentElement as HTMLElement);
@@ -963,14 +1056,20 @@ function scrollIntoViewLocal(el: Element, win: Window, behavior: ScrollBehavior 
   }
 }
 
-function useFrameMutationObserver(callback: (entries: MutationRecord[], win: Window) => void) {
+function useFrameMutationObserver(
+  callback: (entries: MutationRecord[], win: Window) => void
+) {
   return useCallback(() => {
-    const frame = document?.getElementById("preview-frame") as HTMLIFrameElement | null;
+    const frame = document?.getElementById(
+      "preview-frame"
+    ) as HTMLIFrameElement | null;
     if (!frame) return;
     let observer: MutationObserver | null = null;
     const win = frame.contentWindow;
     let enabled = true;
-    const disable = () => { enabled = false; };
+    const disable = () => {
+      enabled = false;
+    };
     const attachObserver = () => {
       const win2 = frame.contentWindow;
       const doc = frame.contentDocument || win2?.document;
@@ -1109,7 +1208,8 @@ export function Chat({
           return;
         }
         case "data-tool-status": {
-          const { toolCallId, status: toolSt } = dataPart.data as DataToolStatus;
+          const { toolCallId, status: toolSt } =
+            dataPart.data as DataToolStatus;
           setToolStatus((s) => ({ ...s, [toolCallId]: toolSt }));
           return;
         }
@@ -1140,7 +1240,9 @@ export function Chat({
       prepareSendMessagesRequest: async (opts: any) => {
         const puck = getPuck() as any;
         const config = puck?.config ?? { components: {} };
-        const appState = puck?.appState ?? { data: { root: { props: {} }, content: [], zones: {} } };
+        const appState = puck?.appState ?? {
+          data: { root: { props: {} }, content: [], zones: {} },
+        };
 
         const root = config.root ?? {
           fields: {
@@ -1206,7 +1308,11 @@ export function Chat({
     onFinish: () => {
       const puck = getPuck() as any;
       if (puck?.appState) {
-        puckDispatch({ type: "set", state: puck.appState, recordHistory: true });
+        puckDispatch({
+          type: "set",
+          state: puck.appState,
+          recordHistory: true,
+        });
       }
     },
   } as any);
@@ -1226,7 +1332,8 @@ export function Chat({
   // prepareSendMessagesRequest with a stale (empty) value.
   const pendingSendImagesRef = useRef<string[]>([]);
 
-  const [targetComponent, setTargetComponent] = useState<TargetComponent | null>(null);
+  const [targetComponent, setTargetComponent] =
+    useState<TargetComponent | null>(null);
   // Ref so prepareSendMessagesRequest (defined once inside useChat) always reads the latest value.
   const targetComponentRef = useRef<TargetComponent | null>(null);
   useEffect(() => {
@@ -1293,7 +1400,12 @@ export function Chat({
           inputRef={inputRef}
           status={resolvedStatus}
           examplePrompts={examplePrompts?.map(({ label, href, onClick }) => (
-            <ExamplePrompt key={label} label={label} href={href} onClick={onClick} />
+            <ExamplePrompt
+              key={label}
+              label={label}
+              href={href}
+              onClick={onClick}
+            />
           ))}
           error={error}
           handleRetry={() => {
@@ -1306,7 +1418,11 @@ export function Chat({
           images={attachedImages}
           onImagesChange={setAttachedImages}
         >
-          <Placeholder dispatch={puckDispatch} inputRef={inputRef} pluginRef={pluginRef} />
+          <Placeholder
+            dispatch={puckDispatch}
+            inputRef={inputRef}
+            pluginRef={pluginRef}
+          />
         </ChatBody>
       </ToolStatusProvider>
     </div>
@@ -1331,9 +1447,9 @@ export function createAiPlugin(opts: AiPluginProps = {}): Plugin {
     overrides: {
       preview: ({ children }: { children: ReactNode }): ReactElement => {
         if (scrollTracking) {
-          return <ScrollTracking>{children}</ScrollTracking> as ReactElement;
+          return (<ScrollTracking>{children}</ScrollTracking>) as ReactElement;
         }
-        return <>{children}</> as ReactElement;
+        return (<>{children}</>) as ReactElement;
       },
     },
   };

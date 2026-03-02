@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@puckeditor/cloud-client": "^0.5.0",
-    "@puckeditor/core": "workspace:*",
+    "puckeditor-core": "workspace:*",
     "@puckeditor/plugin-ai": "^0.5.0",
     "classnames": "^2.3.2",
     "next": "^16.0.8",

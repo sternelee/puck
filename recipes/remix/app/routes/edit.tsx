@@ -1,5 +1,5 @@
-import { Puck, type Data, type Config } from "@puckeditor/core";
-import styles from "@puckeditor/core/puck.css";
+import { Puck, type Data, type Config } from "puckeditor-core";
+import styles from "puckeditor-core/puck.css";
 import type {
   ActionFunctionArgs,
   LinksFunction,

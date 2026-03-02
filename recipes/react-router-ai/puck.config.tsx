@@ -1,4 +1,4 @@
-import type { Config } from "@puckeditor/core";
+import type { Config } from "puckeditor-core";
 
 type Props = {
   HeadingBlock: { title: string };
