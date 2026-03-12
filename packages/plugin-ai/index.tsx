@@ -641,6 +641,18 @@ function PromptForm({
     }
   };
 
+  const handlePaste = async (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = Array.from(e.clipboardData.items);
+    const imageFiles = items
+      .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter((file): file is File => file !== null);
+
+    if (imageFiles.length > 0) {
+      await addImages(imageFiles);
+    }
+  };
+
   const classNames = [
     "puck-ai-prompt-form",
     glow ? "puck-ai-prompt-form--glow" : "",
@@ -716,6 +728,7 @@ function PromptForm({
                 internalRef.current = node;
               }}
               onChange={(e) => setPrompt(e.target.value)}
+              onPaste={handlePaste}
               onKeyDown={(e) => {
                 if (!e.shiftKey && e.key === "Enter") {
                   e.preventDefault();
