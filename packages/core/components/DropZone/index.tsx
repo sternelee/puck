@@ -556,7 +556,7 @@ const DropZoneRenderItem = ({
   const richtextProps = useRichtextProps(Component.fields, props);
 
   return (
-    <DropZoneProvider key={props.id} value={nextContextValue}>
+    <dropZoneContext.Provider key={props.id} value={nextContextValue}>
       <Component.render
         {...props}
         {...richtextProps}
@@ -566,7 +566,7 @@ const DropZoneRenderItem = ({
           metadata: { ...metadata, ...Component.metadata },
         }}
       />
-    </DropZoneProvider>
+    </dropZoneContext.Provider>
   );
 };
 

@@ -1,0 +1,29 @@
+---
+/**
+ * Root route — rendered by the [...slug] catch-all.
+ * This file exists only to ensure Astro serves the homepage;
+ * actual rendering logic lives in [...slug].astro.
+ */
+import { Render } from "@puckeditor/core/server";
+import "@puckeditor/core/puck.css";
+import config from "../../puck.config";
+import { getPage } from "../lib/get-page";
+
+const data = getPage("/");
+
+if (!data) {
+  return Astro.redirect("/404");
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{(data.root as any)?.props?.title ?? "Puck Page"}</title>
+  </head>
+  <body>
+    <Render config={config} data={data} />
+  </body>
+</html>

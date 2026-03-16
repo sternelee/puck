@@ -44,6 +44,11 @@
       "import": "./dist/rsc.mjs",
       "require": "./dist/rsc.js"
     },
+    "./server": {
+      "types": "./dist/rsc.d.ts",
+      "import": "./dist/rsc.mjs",
+      "require": "./dist/rsc.js"
+    },
     "./internal": {
       "types": "./dist/internal.d.ts",
       "import": "./dist/internal.mjs",
@@ -57,6 +62,9 @@
   "typesVersions": {
     "*": {
       "rsc": [
+        "./dist/rsc.js"
+      ],
+      "server": [
         "./dist/rsc.js"
       ]
     }

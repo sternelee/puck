@@ -3,14 +3,10 @@
 import { rootZone } from "../../lib/root-droppable-id";
 import { useSlots } from "../../lib/use-slots";
 import { Config, Data, Metadata, UserGenerics } from "../../types";
-import {
-  DropZonePure,
-  DropZoneProvider,
-  DropZoneRenderPure,
-} from "../DropZone";
+import { DropZonePure, DropZoneRenderPure } from "../DropZone";
 import React, { useMemo } from "react";
 import { SlotRender } from "../SlotRender";
-import { DropZoneContext } from "../DropZone/context";
+import { DropZoneContext, dropZoneContext } from "../DropZone/context";
 import { useRichtextProps } from "../RichTextEditor/lib/use-richtext-props";
 
 export const renderContext = React.createContext<{
@@ -80,20 +76,20 @@ export function Render<
   if (config.root?.render) {
     return (
       <renderContext.Provider value={{ config, data: defaultedData, metadata }}>
-        <DropZoneProvider value={nextContextValue}>
+        <dropZoneContext.Provider value={nextContextValue}>
           <config.root.render {...propsWithSlots} {...richtextProps}>
             <DropZoneRenderPure zone={rootZone} />
           </config.root.render>
-        </DropZoneProvider>
+        </dropZoneContext.Provider>
       </renderContext.Provider>
     );
   }
 
   return (
     <renderContext.Provider value={{ config, data: defaultedData, metadata }}>
-      <DropZoneProvider value={nextContextValue}>
+      <dropZoneContext.Provider value={nextContextValue}>
         <DropZoneRenderPure zone={rootZone} />
-      </DropZoneProvider>
+      </dropZoneContext.Provider>
     </renderContext.Provider>
   );
 }
