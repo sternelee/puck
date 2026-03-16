@@ -1,0 +1,36 @@
+---
+/**
+ * Editor route — renders the Puck editor for any path.
+ * Visit any page and replace the URL with /edit/[path] to edit it.
+ * e.g. to edit /, visit /edit
+ *      to edit /about, visit /edit/about
+ *
+ * NB: This route is public. Add authentication before deploying to production.
+ */
+import { PuckEditor } from "../../components/PuckEditor";
+import { getPage } from "../../lib/get-page";
+
+const { slug } = Astro.params;
+const path = `/${(slug ?? "").replace(/\/$/, "") || ""}`;
+const data = getPage(path || "/") ?? {};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puck: {path}</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <PuckEditor path={path} data={data} client:only="react" />
+  </body>
+</html>

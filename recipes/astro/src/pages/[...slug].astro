@@ -1,0 +1,31 @@
+---
+/**
+ * Catch-all route that server-side renders Puck pages.
+ * Uses @puckeditor/core/server (ServerRender) for SSR without any client JS.
+ * To edit any page, add /edit to the end of the URL.
+ */
+import { Render } from "@puckeditor/core/server";
+import "@puckeditor/core/puck.css";
+import config from "../../puck.config";
+import { getPage } from "../lib/get-page";
+
+const { slug } = Astro.params;
+const path = `/${(slug ?? "").replace(/\/$/, "") || ""}`;
+const data = getPage(path || "/");
+
+if (!data) {
+  return Astro.redirect("/404");
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{(data.root as any)?.props?.title ?? "Puck Page"}</title>
+  </head>
+  <body>
+    <Render config={config} data={data} />
+  </body>
+</html>
