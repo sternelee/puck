@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@astrojs/react": "^4.0.0",
-    "@puckeditor/core": "workspace:*",
+    "puckeditor-core": "workspace:*",
     "astro": "^5.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
