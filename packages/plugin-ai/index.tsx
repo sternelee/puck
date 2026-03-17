@@ -26,11 +26,15 @@ import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
 import { useStickToBottom } from "use-stick-to-bottom";
 import {
+  ArrowLeft,
   ArrowUp,
   Bot,
   Check,
+  Eye,
+  EyeOff,
   Image as ImageIcon,
   RotateCcw,
+  Settings,
   TriangleAlert,
   X,
 } from "lucide-react";
@@ -238,6 +242,55 @@ export type RequestOptions = {
   credentials?: RequestCredentials;
 };
 
+export type ThinkingLevel = "none" | "low" | "medium" | "high";
+
+export type AiSettings = {
+  thinkingLevel: ThinkingLevel;
+  urlContext: boolean;
+  googleSearch: boolean;
+  enterpriseWebSearch: boolean;
+  figmaToken: string;
+};
+
+const DEFAULT_AI_SETTINGS: AiSettings = {
+  thinkingLevel: "none",
+  urlContext: false,
+  googleSearch: false,
+  enterpriseWebSearch: false,
+  figmaToken: "",
+};
+
+const AI_SETTINGS_STORAGE_KEY = "puck-ai-settings";
+
+function useAiSettings(
+  storageKey = AI_SETTINGS_STORAGE_KEY
+): [AiSettings, (update: Partial<AiSettings>) => void] {
+  const [settings, setSettingsState] = useState<AiSettings>(() => {
+    try {
+      if (typeof window !== "undefined") {
+        const stored = localStorage.getItem(storageKey);
+        if (stored) return { ...DEFAULT_AI_SETTINGS, ...JSON.parse(stored) };
+      }
+    } catch {}
+    return { ...DEFAULT_AI_SETTINGS };
+  });
+
+  const setSettings = useCallback(
+    (update: Partial<AiSettings>) => {
+      setSettingsState((prev) => {
+        const next = { ...prev, ...update };
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+    },
+    [storageKey]
+  );
+
+  return [settings, setSettings];
+}
+
 export type AiPluginProps = {
   host?: string;
   chat?: {
@@ -248,6 +301,9 @@ export type AiPluginProps = {
   prepareRequest?: (
     opts: RequestOptions
   ) => RequestOptions | Promise<RequestOptions>;
+  settings?: {
+    storageKey?: string;
+  };
 };
 
 // Extend puckeditor-core types
@@ -1131,6 +1187,180 @@ function ScrollTracking({ children }: { children: ReactNode }) {
 }
 
 // ============================================================
+// Toggle switch
+// ============================================================
+
+function Toggle({
+  checked,
+  onChange,
+  id,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  id: string;
+}) {
+  return (
+    <label className="puck-ai-toggle" htmlFor={id}>
+      <input
+        type="checkbox"
+        id={id}
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="puck-ai-toggle-input"
+      />
+      <span className="puck-ai-toggle-slider" />
+    </label>
+  );
+}
+
+// ============================================================
+// SettingsPanel
+// ============================================================
+
+function SettingsPanel({
+  settings,
+  onChange,
+}: {
+  settings: AiSettings;
+  onChange: (update: Partial<AiSettings>) => void;
+}) {
+  const [showToken, setShowToken] = useState(false);
+
+  return (
+    <div className="puck-ai-settings-scroll">
+      <div className="puck-ai-settings">
+        <div className="puck-ai-settings-section">
+          <div className="puck-ai-settings-section-title">Model settings</div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-thinking-level"
+            >
+              Thinking level
+              <span className="puck-ai-settings-hint">
+                Extended reasoning budget
+              </span>
+            </label>
+            <select
+              id="puck-ai-thinking-level"
+              className="puck-ai-settings-select"
+              value={settings.thinkingLevel}
+              onChange={(e) =>
+                onChange({ thinkingLevel: e.target.value as ThinkingLevel })
+              }
+            >
+              <option value="none">Off</option>
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-url-context"
+            >
+              URL context
+              <span className="puck-ai-settings-hint">
+                Fetch linked URLs during generation
+              </span>
+            </label>
+            <Toggle
+              id="puck-ai-url-context"
+              checked={settings.urlContext}
+              onChange={(v) => onChange({ urlContext: v })}
+            />
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-google-search"
+            >
+              Google Search
+              <span className="puck-ai-settings-hint">
+                Ground responses with live search
+              </span>
+            </label>
+            <Toggle
+              id="puck-ai-google-search"
+              checked={settings.googleSearch}
+              onChange={(v) => onChange({ googleSearch: v })}
+            />
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-enterprise-search"
+            >
+              Enterprise web search
+              <span className="puck-ai-settings-hint">
+                Advanced grounding via Vertex AI
+              </span>
+            </label>
+            <Toggle
+              id="puck-ai-enterprise-search"
+              checked={settings.enterpriseWebSearch}
+              onChange={(v) => onChange({ enterpriseWebSearch: v })}
+            />
+          </div>
+        </div>
+
+        <div className="puck-ai-settings-section">
+          <div className="puck-ai-settings-section-title">
+            Figma integration
+          </div>
+
+          <div className="puck-ai-settings-row puck-ai-settings-row--column">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-figma-token"
+            >
+              Personal access token
+            </label>
+            <div className="puck-ai-settings-input-wrap">
+              <input
+                id="puck-ai-figma-token"
+                type={showToken ? "text" : "password"}
+                className="puck-ai-settings-input"
+                placeholder="figd_xxxxxxxxxxxx"
+                value={settings.figmaToken}
+                onChange={(e) => onChange({ figmaToken: e.target.value })}
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="button"
+                className="puck-ai-settings-input-action"
+                onClick={() => setShowToken((v) => !v)}
+                title={showToken ? "Hide token" : "Show token"}
+              >
+                {showToken ? <EyeOff size={14} /> : <Eye size={14} />}
+              </button>
+            </div>
+            <a
+              href="https://www.figma.com/settings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="puck-ai-settings-link"
+            >
+              Get your Figma access token →
+            </a>
+            <span className="puck-ai-settings-hint" style={{ marginTop: 4 }}>
+              Paste a Figma URL in chat to generate from your design. Token
+              overrides server config.
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // usePuck store hook (singleton per plugin instance)
 // ============================================================
 
@@ -1144,10 +1374,12 @@ export function Chat({
   chat,
   host = "/api/puck/chat",
   prepareRequest,
+  settings,
 }: {
   chat?: AiPluginProps["chat"];
   host?: string;
   prepareRequest?: AiPluginProps["prepareRequest"];
+  settings?: AiPluginProps["settings"];
 }) {
   const { examplePrompts } = chat ?? {};
   const puckDispatch = (usePuck as any)((s: any) => s.dispatch);
@@ -1157,6 +1389,12 @@ export function Chat({
   const pluginRef = useRef<HTMLDivElement | null>(null);
   const [error, setError] = useState<string | undefined>();
   const [toolStatus, setToolStatus] = useState<Record<string, ToolStatus>>({});
+  const [showSettings, setShowSettings] = useState(false);
+  const [aiSettings, setAiSettings] = useAiSettings(settings?.storageKey);
+  const aiSettingsRef = useRef<AiSettings>(aiSettings);
+  useEffect(() => {
+    aiSettingsRef.current = aiSettings;
+  }, [aiSettings]);
 
   const uploadScreenshot = useCallback(
     async (width: number, bucketUrl: string) => {
@@ -1267,6 +1505,17 @@ export function Chat({
         };
         const configWithRoot = { ...config, root };
 
+        const currentSettings = aiSettingsRef.current;
+        const geminiConfig: Record<string, unknown> = {};
+        if (currentSettings.thinkingLevel !== "none")
+          geminiConfig.thinkingLevel = currentSettings.thinkingLevel;
+        if (currentSettings.urlContext) geminiConfig.urlContext = true;
+        if (currentSettings.googleSearch) geminiConfig.googleSearch = true;
+        if (currentSettings.enterpriseWebSearch)
+          geminiConfig.enterpriseWebSearch = true;
+        if (currentSettings.figmaToken)
+          geminiConfig.figmaToken = currentSettings.figmaToken;
+
         const defaultBody = {
           ...opts.body,
           chatId: localChatId.current,
@@ -1274,6 +1523,7 @@ export function Chat({
           messages: opts.messages,
           pageData: appState.data,
           config: configWithRoot,
+          ...(Object.keys(geminiConfig).length > 0 ? { geminiConfig } : {}),
           // Read from refs to avoid stale closures — state values captured at
           // initial render would always be their initial values here.
           ...(targetComponentRef.current
@@ -1405,39 +1655,67 @@ export function Chat({
 
   return (
     <div className="puck-ai-chat" ref={pluginRef}>
-      <div className="puck-ai-chat-header">AI page builder</div>
-      <ToolStatusProvider value={toolStatus}>
-        <ChatBody
-          messages={messagesWithStatuses}
-          handleSubmit={handleSubmit}
-          inputRef={inputRef}
-          status={resolvedStatus}
-          examplePrompts={examplePrompts?.map(({ label, href, onClick }) => (
-            <ExamplePrompt
-              key={label}
-              label={label}
-              href={href}
-              onClick={onClick}
-            />
-          ))}
-          error={error}
-          handleRetry={() => {
-            setError("");
-            regenerate();
-          }}
-          promptValue={promptValue}
-          targetComponent={targetComponent}
-          onClearTarget={() => setTargetComponent(null)}
-          images={attachedImages}
-          onImagesChange={setAttachedImages}
-        >
-          <Placeholder
-            dispatch={puckDispatch}
+      <div className="puck-ai-chat-header">
+        {showSettings && (
+          <button
+            className="puck-ai-icon-button"
+            onClick={() => setShowSettings(false)}
+            title="Back to chat"
+            type="button"
+          >
+            <ArrowLeft size={16} />
+          </button>
+        )}
+        <span className="puck-ai-chat-header-title">
+          {showSettings ? "Settings" : "AI page builder"}
+        </span>
+        {!showSettings && (
+          <button
+            className="puck-ai-icon-button"
+            onClick={() => setShowSettings(true)}
+            title="Settings"
+            type="button"
+          >
+            <Settings size={16} />
+          </button>
+        )}
+      </div>
+      {showSettings ? (
+        <SettingsPanel settings={aiSettings} onChange={setAiSettings} />
+      ) : (
+        <ToolStatusProvider value={toolStatus}>
+          <ChatBody
+            messages={messagesWithStatuses}
+            handleSubmit={handleSubmit}
             inputRef={inputRef}
-            pluginRef={pluginRef}
-          />
-        </ChatBody>
-      </ToolStatusProvider>
+            status={resolvedStatus}
+            examplePrompts={examplePrompts?.map(({ label, href, onClick }) => (
+              <ExamplePrompt
+                key={label}
+                label={label}
+                href={href}
+                onClick={onClick}
+              />
+            ))}
+            error={error}
+            handleRetry={() => {
+              setError("");
+              regenerate();
+            }}
+            promptValue={promptValue}
+            targetComponent={targetComponent}
+            onClearTarget={() => setTargetComponent(null)}
+            images={attachedImages}
+            onImagesChange={setAttachedImages}
+          >
+            <Placeholder
+              dispatch={puckDispatch}
+              inputRef={inputRef}
+              pluginRef={pluginRef}
+            />
+          </ChatBody>
+        </ToolStatusProvider>
+      )}
     </div>
   );
 }
@@ -1447,7 +1725,7 @@ export function Chat({
 // ============================================================
 
 export function createAiPlugin(opts: AiPluginProps = {}): Plugin {
-  const { scrollTracking = true, host, chat, prepareRequest } = opts;
+  const { scrollTracking = true, host, chat, prepareRequest, settings } = opts;
 
   return {
     label: "AI",
@@ -1455,7 +1733,12 @@ export function createAiPlugin(opts: AiPluginProps = {}): Plugin {
     icon: <Bot />,
     mobilePanelHeight: "min-content",
     render: (): ReactElement => (
-      <Chat host={host} chat={chat} prepareRequest={prepareRequest} />
+      <Chat
+        host={host}
+        chat={chat}
+        prepareRequest={prepareRequest}
+        settings={settings}
+      />
     ),
     overrides: {
       preview: ({ children }: { children: ReactNode }): ReactElement => {
