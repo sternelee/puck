@@ -26,6 +26,7 @@ import {
   type DynamicToolUIPart,
   type ChatStatus,
   type CreateUIMessage,
+  type FileUIPart,
   type LanguageModelUsage,
   type ToolUIPart,
   type UIMessage,
@@ -83,6 +84,26 @@ async function filesToAttachedImages(files: FileList | File[]): Promise<Attached
     results.push({ id: prefixedUlid("img"), dataUrl, name: file.name });
   }
   return results;
+}
+
+/** Parse `data:<mediatype>;base64,...` for UI file parts (chat history). */
+function mediaTypeFromDataUrl(dataUrl: string): string {
+  if (!dataUrl.startsWith("data:")) return "application/octet-stream";
+  const rest = dataUrl.slice(5);
+  const semi = rest.indexOf(";");
+  const comma = rest.indexOf(",");
+  const end = semi === -1 ? comma : semi;
+  if (end <= 0) return "application/octet-stream";
+  return rest.slice(0, end) || "application/octet-stream";
+}
+
+function attachedImageToFileUIPart(img: AttachedImage): FileUIPart {
+  return {
+    type: "file",
+    mediaType: mediaTypeFromDataUrl(img.dataUrl),
+    url: img.dataUrl,
+    filename: img.name,
+  };
 }
 
 // ============================================================
@@ -1715,9 +1736,14 @@ export function Chat({
     // a render cycle), so we cannot rely on state or a useEffect-synced ref —
     // they would already be cleared by then.
     pendingSendImagesRef.current = attachedImages.map((img) => img.dataUrl);
+    const fileParts = attachedImages.map(attachedImageToFileUIPart);
     setAttachedImages([]);
-    // Don't clear targetComponent on submit — let it persist across follow-up messages
-    (sendMessage as any)({ text }).catch((e: Error) => {
+    // Include file parts so images appear in chat history; `body.images` is still
+    // sent for APIs that read the legacy field from prepareSendMessagesRequest.
+    const sendPayload: { text?: string; files?: FileUIPart[] } = {};
+    if (text) sendPayload.text = text;
+    if (fileParts.length > 0) sendPayload.files = fileParts;
+    (sendMessage as any)(sendPayload).catch((e: Error) => {
       console.error(e);
     });
   };
