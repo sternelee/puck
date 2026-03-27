@@ -14,7 +14,7 @@ import {
 import styles from "./styles.module.css";
 import "./styles.css";
 import getClassNameFactory from "../../lib/get-class-name-factory";
-import { Copy, CornerLeftUp, Sparkles, Trash } from "lucide-react";
+import { Copy, CornerLeftUp, Sparkles, Star, Trash } from "lucide-react";
 import { useAppStore, useAppStoreApi } from "../../store";
 import { Loader } from "../Loader";
 import { ActionBar } from "../ActionBar";
@@ -23,7 +23,7 @@ import { createPortal } from "react-dom";
 
 import { dropZoneContext, DropZoneProvider } from "../DropZone";
 import { createDynamicCollisionDetector } from "../../lib/dnd/collision/dynamic";
-import { DragAxis } from "../../types";
+import { ComponentData, DragAxis } from "../../types";
 import { UniqueIdentifier } from "@dnd-kit/abstract";
 import { getDeepScrollPosition } from "../../lib/get-deep-scroll-position";
 import { DropZoneContext, ZoneStoreContext } from "../DropZone/context";
@@ -34,6 +34,12 @@ import { accumulateTransform } from "../../lib/accumulate-transform";
 import { useContextStore } from "../../lib/use-context-store";
 import { useOnDragFinished } from "../../lib/dnd/use-on-drag-finished";
 import { LoadedRichTextMenu } from "../RichTextMenu";
+import { usePropsContext } from "../Puck";
+import {
+  clonePuckFavoriteData,
+  createPuckFavoriteId,
+  savePuckFavorite,
+} from "../../lib/favorites";
 
 const getClassName = getClassNameFactory("DraggableComponent", styles);
 
@@ -78,6 +84,8 @@ export type ComponentDndData = {
   zone: string;
   index: number;
   componentType: string;
+  insertData?: ComponentData;
+  previewData?: { data: ComponentData };
   containsActiveZone: boolean;
   depth: number;
   path: UniqueIdentifier[];
@@ -119,6 +127,7 @@ export const DraggableComponent = ({
   const overrides = useAppStore((s) => s.overrides);
   const dispatch = useAppStore((s) => s.dispatch);
   const iframe = useAppStore((s) => s.iframe);
+  const { favoritesStorageKey, headerPath } = usePropsContext();
   const hasAiPlugin = useAppStore((s) =>
     s.plugins.some((p) => p.name === "ai")
   );
@@ -457,6 +466,52 @@ export const DraggableComponent = ({
     });
   }, [id, index, zoneCompound, label, componentType]);
 
+  const onFavorite = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const item = getItem(
+      {
+        zone: zoneCompound,
+        index,
+      },
+      appStore.getState().state
+    );
+
+    if (!item) return;
+
+    const favoriteName = window.prompt(
+      "Favorite name",
+      label || componentType || item.type
+    );
+
+    if (!favoriteName || favoriteName.trim() === "") {
+      return;
+    }
+
+    savePuckFavorite(
+      {
+        id: createPuckFavoriteId("favorite-component"),
+        kind: "component",
+        name: favoriteName.trim(),
+        createdAt: new Date().toISOString(),
+        sourcePath: headerPath,
+        componentType: item.type,
+        data: clonePuckFavoriteData(item),
+      },
+      favoritesStorageKey
+    );
+
+    window.alert(`Saved "${favoriteName.trim()}" to favorites.`);
+  }, [
+    appStore,
+    componentType,
+    favoritesStorageKey,
+    headerPath,
+    index,
+    label,
+    zoneCompound,
+  ]);
+
   const [hover, setHover] = useState(false);
 
   const indicativeHover = useContextStore(
@@ -646,8 +701,9 @@ export const DraggableComponent = ({
     s.currentRichText?.inlineComponentId === id ? s.currentRichText : null
   );
 
+  const hasFavoriteAction = permissions.drag;
   const hasNormalActions =
-    permissions.duplicate || permissions.delete || hasAiPlugin;
+    permissions.duplicate || permissions.delete || hasAiPlugin || hasFavoriteAction;
 
   return (
     <DropZoneProvider value={nextContextValue}>
@@ -707,8 +763,13 @@ export const DraggableComponent = ({
                       <Sparkles size={16} />
                     </ActionBar.Action>
                   )}
+                  {hasFavoriteAction && (
+                    <ActionBar.Action onClick={onFavorite} label="Favorite">
+                      <Star size={16} />
+                    </ActionBar.Action>
+                  )}
                   {(permissions.duplicate || permissions.delete) &&
-                    hasAiPlugin && <ActionBar.Separator />}
+                    (hasAiPlugin || hasFavoriteAction) && <ActionBar.Separator />}
                   {permissions.duplicate && (
                     <ActionBar.Action onClick={onDuplicate} label="Duplicate">
                       <Copy size={16} />

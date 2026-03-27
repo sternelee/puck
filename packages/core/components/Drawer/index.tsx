@@ -6,9 +6,14 @@ import { generateId } from "../../lib/generate-id";
 import { useDragListener } from "../DragDropContext";
 import { useSafeId } from "../../lib/use-safe-id";
 import { useDraggable, useDroppable } from "@dnd-kit/react";
+import { ComponentData } from "../../types";
+import { useAppStore } from "../../store";
+import { populateIds } from "../../lib/data/populate-ids";
 
 const getClassName = getClassNameFactory("Drawer", styles);
 const getClassNameItem = getClassNameFactory("DrawerItem", styles);
+
+export type DrawerItemData = ComponentData;
 
 export const DrawerItemInner = ({
   children,
@@ -64,17 +69,25 @@ const DrawerItemDraggable = ({
   name,
   label,
   id,
+  data,
   isDragDisabled,
 }: {
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
   name: string;
   label?: string;
   id: string;
+  data?: DrawerItemData;
   isDragDisabled?: boolean;
 }) => {
+  const config = useAppStore((s) => s.config);
+  const previewData = useMemo(() => {
+    if (!data) return undefined;
+    return { data: populateIds(data, config, true) };
+  }, [config, data]);
+
   const { ref } = useDraggable({
     id,
-    data: { componentType: name },
+    data: { componentType: name, insertData: data, previewData },
     disabled: isDragDisabled,
     type: "drawer",
   });
@@ -105,6 +118,7 @@ const DrawerItem = ({
   children,
   id,
   label,
+  data,
   index,
   isDragDisabled,
 }: {
@@ -112,6 +126,7 @@ const DrawerItem = ({
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
   id?: string;
   label?: string;
+  data?: DrawerItemData;
   index?: number; // TODO deprecate
   isDragDisabled?: boolean;
 }) => {
@@ -138,6 +153,7 @@ const DrawerItem = ({
         name={name}
         label={label}
         id={dynamicId}
+        data={data}
         isDragDisabled={isDragDisabled}
       >
         {children}

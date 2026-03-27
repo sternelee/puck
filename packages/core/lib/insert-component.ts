@@ -4,13 +4,15 @@ import { useAppStoreApi } from "../store";
 import { generateId } from "./generate-id";
 import { getItem } from "./data/get-item";
 import { getSelectorForId } from "./get-selector-for-id";
+import { ComponentData } from "../types";
 
 // Makes testing easier without mocks
 export const insertComponent = async (
   componentType: string,
   zone: string,
   index: number,
-  appStore: ReturnType<typeof useAppStoreApi>
+  appStore: ReturnType<typeof useAppStoreApi>,
+  data?: ComponentData
 ) => {
   const { getState } = appStore;
 
@@ -23,6 +25,7 @@ export const insertComponent = async (
     destinationIndex: index,
     destinationZone: zone,
     id,
+    data,
   };
 
   const stateBefore = getState().state;

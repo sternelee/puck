@@ -68,6 +68,7 @@ type PuckProps<
   permissions?: Partial<Permissions>;
   plugins?: Plugin<UserConfig>[];
   overrides?: Partial<Overrides<UserConfig>>;
+  favoritesStorageKey?: string;
   fieldTransforms?: FieldTransforms<UserConfig>;
   renderHeader?: (props: {
     children: ReactNode;

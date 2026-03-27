@@ -14,23 +14,41 @@ export function insertAction<UserData extends Data>(
   appStore: AppStore
 ): PrivateAppState<UserData> {
   const id = action.id || generateId(action.componentType);
-  const emptyComponentData = populateIds(
-    {
-      type: action.componentType,
+  let emptyComponentData;
+
+  if (action.data) {
+    const populatedData = populateIds(action.data, appStore.config, true);
+
+    emptyComponentData = {
+      ...populatedData,
       props: {
-        ...(appStore.config.components[action.componentType].defaultProps ||
-          {}),
+        ...populatedData.props,
         id,
       },
-    },
-    appStore.config
-  );
+    };
+  } else {
+    emptyComponentData = populateIds(
+      {
+        type: action.componentType,
+        props: {
+          ...(appStore.config.components[action.componentType].defaultProps || {}),
+          id,
+        },
+      },
+      appStore.config
+    );
+  }
 
   const [parentId] = action.destinationZone.split(":");
   const idsInPath = getIdsForParent(action.destinationZone, state);
 
   return walkAppState<UserData>(
-    state,
+    {
+      ...state,
+      data: {
+        ...state.data,
+      },
+    },
     appStore.config,
     (content, zoneCompound) => {
       if (zoneCompound === action.destinationZone) {

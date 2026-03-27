@@ -7,6 +7,7 @@ export type InsertAction = {
   destinationIndex: number;
   destinationZone: string;
   id?: string;
+  data?: ComponentData;
 };
 
 export type DuplicateAction = {

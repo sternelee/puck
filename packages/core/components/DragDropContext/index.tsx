@@ -337,7 +337,8 @@ const DragDropContextClient = ({
                     thisPreview.componentType,
                     thisPreview.zone,
                     thisPreview.index,
-                    appStore
+                  appStore,
+                  thisPreview.insertData
                   );
                 } else if (initialSelector.current) {
                   moveComponent(
@@ -373,7 +374,8 @@ const DragDropContextClient = ({
                   thisPreview.componentType,
                   thisPreview.zone,
                   thisPreview.index,
-                  appStore
+                  appStore,
+                  thisPreview.insertData
                 );
               } else if (initialSelector.current) {
                 dispatch({
@@ -482,6 +484,8 @@ const DragDropContextClient = ({
           }
 
           if (dragMode.current === "new") {
+            const previewData = sourceData.previewData;
+
             zoneStore.setState({
               previewIndex: {
                 [targetZone]: {
@@ -490,7 +494,9 @@ const DragDropContextClient = ({
                   index: targetIndex,
                   zone: targetZone,
                   element: source.element,
+                  insertData: sourceData.insertData,
                   props: {
+                    ...(previewData?.data.props || {}),
                     id: source.id.toString(),
                   },
                 },

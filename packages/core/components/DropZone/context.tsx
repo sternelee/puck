@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Draggable } from "@dnd-kit/dom";
 import { useAppStore } from "../../store";
+import { ComponentData } from "../../types";
 import { createStore, StoreApi } from "zustand";
 
 export type PathData = Record<string, { path: string[]; label: string }>;
@@ -32,6 +33,7 @@ export type Preview = {
   index: number;
   zone: string;
   props: Record<string, any>;
+  insertData?: ComponentData;
   type: "insert" | "move";
   element: Element | undefined;
 } | null;
