@@ -939,6 +939,15 @@
   outline-offset: 2px;
 }
 
+.puck-ai-toggle--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.puck-ai-toggle--disabled .puck-ai-toggle-input:disabled + .puck-ai-toggle-slider {
+  background: var(--puck-color-grey-08);
+}
+
 /* ============================================================
    Settings panel
    ============================================================ */

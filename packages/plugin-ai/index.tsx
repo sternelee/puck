@@ -281,8 +281,15 @@ export type AiSettings = {
   googleSearch: boolean;
   enterpriseWebSearch: boolean;
   /**
+   * When a migration source URL is present, run Browser Rendering (Puppeteer/Worker) to capture
+   * a viewport screenshot and DOM bundle for the model. When off, migration URLs still enable
+   * URL context only — no `runBrowserMigrationPipeline` on the server.
+   */
+  browserCapture: boolean;
+  /**
    * When migrating from a page URL, run the full browser pipeline (DOM bundle + structured IR).
    * Slower and uses more Worker time; leave off for screenshot-only + Vertex url_context.
+   * Only applies when {@link AiSettings.browserCapture} is enabled.
    */
   pageMigrationIr: boolean;
   figmaToken: string;
@@ -293,6 +300,7 @@ const DEFAULT_AI_SETTINGS: AiSettings = {
   urlContext: false,
   googleSearch: false,
   enterpriseWebSearch: false,
+  browserCapture: false,
   pageMigrationIr: false,
   figmaToken: "",
 };
@@ -435,6 +443,71 @@ const applyArrayDefaults = (oldProps: any, newProps: any, fields: any) => {
   return updatedProps;
 };
 
+/**
+ * After `insert`, Puck state exposed by `getState()` may not yet include the new node in the
+ * same synchronous turn (React batching / store timing). Retry before merging AI props via `replace`.
+ */
+const scheduleReplacePropsAfterAddInsert = (
+  operation: AddOperation,
+  {
+    getState,
+    dispatchAction,
+    config,
+  }: {
+    getState: () => any;
+    dispatchAction: (action: any) => void;
+    config: Config;
+  }
+) => {
+  const maxAttempts = 8;
+  const tryApply = (attempt: number) => {
+    const existing = getItemById(getState(), operation.id);
+    if (existing) {
+      const newData = {
+        ...existing,
+        props: applyArrayDefaults(
+          existing.props,
+          operation.props,
+          config.components[existing.type]?.fields ?? {}
+        ),
+      };
+      dispatchAction({
+        type: "replace",
+        destinationIndex: operation.index,
+        destinationZone: operation.zone,
+        data: newData,
+        recordHistory: false,
+      });
+      return;
+    }
+    if (attempt >= maxAttempts) {
+      const zoneOk = Boolean(getState()?.indexes?.zones?.[operation.zone]);
+      console.error(
+        "Puck AI: could not find inserted item after add.",
+        zoneOk
+          ? "State may not have synced yet."
+          : `Target zone may be invalid or not yet in the tree: ${operation.zone}`,
+        operation
+      );
+      return;
+    }
+    const delay =
+      attempt === 0
+        ? 0
+        : attempt === 1
+        ? 0
+        : attempt === 2
+        ? 10
+        : attempt === 3
+        ? 50
+        : attempt === 4
+        ? 100
+        : 200;
+    setTimeout(() => tryApply(attempt + 1), delay);
+  };
+  queueMicrotask(() => tryApply(0));
+};
+
 const dispatchOp = (
   operation: Operation,
   {
@@ -459,26 +532,10 @@ const dispatchOp = (
           id: operation.id,
           recordHistory: false,
         });
-        const existing = getItemById(getState(), operation.id);
-        if (!existing) {
-          throw new Error(
-            `Tried to update an item that doesn't exist: ${operation.id}`
-          );
-        }
-        const newData = {
-          ...existing,
-          props: applyArrayDefaults(
-            existing.props,
-            operation.props,
-            config.components[existing.type]?.fields ?? {}
-          ),
-        };
-        dispatchAction({
-          type: "replace",
-          destinationIndex: operation.index,
-          destinationZone: operation.zone,
-          data: newData,
-          recordHistory: false,
+        scheduleReplacePropsAfterAddInsert(operation, {
+          getState,
+          dispatchAction,
+          config,
         });
       }
     } else if (operation.op === "update") {
@@ -1451,17 +1508,23 @@ function Toggle({
   checked,
   onChange,
   id,
+  disabled,
 }: {
   checked: boolean;
   onChange: (v: boolean) => void;
   id: string;
+  disabled?: boolean;
 }) {
   return (
-    <label className="puck-ai-toggle" htmlFor={id}>
+    <label
+      className={`puck-ai-toggle${disabled ? " puck-ai-toggle--disabled" : ""}`}
+      htmlFor={id}
+    >
       <input
         type="checkbox"
         id={id}
         checked={checked}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.checked)}
         className="puck-ai-toggle-input"
       />
@@ -1538,16 +1601,40 @@ function SettingsPanel({
           <div className="puck-ai-settings-row">
             <label
               className="puck-ai-settings-label"
+              htmlFor="puck-ai-browser-capture"
+            >
+              Browser capture
+              <span className="puck-ai-settings-hint">
+                Run server-side browser migration (screenshot + DOM bundle) when a migration
+                URL is in the prompt. Turn off to use URL context only without Worker/Puppeteer.
+              </span>
+            </label>
+            <Toggle
+              id="puck-ai-browser-capture"
+              checked={settings.browserCapture}
+              onChange={(v) =>
+                onChange({
+                  browserCapture: v,
+                  ...(v ? {} : { pageMigrationIr: false }),
+                })
+              }
+            />
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
               htmlFor="puck-ai-page-migration-ir"
             >
               Page migration IR
               <span className="puck-ai-settings-hint">
                 Full DOM bundle + structured plan when a source URL is captured
-                (slower; screenshot-only when off)
+                (slower; screenshot-only when off). Requires Browser capture.
               </span>
             </label>
             <Toggle
               id="puck-ai-page-migration-ir"
+              disabled={!settings.browserCapture}
               checked={settings.pageMigrationIr}
               onChange={(v) => onChange({ pageMigrationIr: v })}
             />
@@ -1815,8 +1902,11 @@ export function Chat({
         if (currentSettings.thinkingLevel !== "none")
           geminiConfig.thinkingLevel = currentSettings.thinkingLevel;
         if (currentSettings.urlContext) geminiConfig.urlContext = true;
-        if (currentSettings.pageMigrationIr)
-          geminiConfig.pageMigrationIr = true;
+        if (currentSettings.browserCapture) {
+          geminiConfig.browserCapture = true;
+          if (currentSettings.pageMigrationIr)
+            geminiConfig.pageMigrationIr = true;
+        }
         if (currentSettings.googleSearch) geminiConfig.googleSearch = true;
         if (currentSettings.enterpriseWebSearch)
           geminiConfig.enterpriseWebSearch = true;
