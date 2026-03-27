@@ -82,7 +82,17 @@ const DrawerItemDraggable = ({
   const config = useAppStore((s) => s.config);
   const previewData = useMemo(() => {
     if (!data) return undefined;
-    return { data: populateIds(data, config, true) };
+
+    const populatedData = populateIds(data, config, true);
+
+    return {
+      data: {
+        type: populatedData.type,
+        props: {
+          id: populatedData.props.id,
+        },
+      } as ComponentData,
+    };
   }, [config, data]);
 
   const { ref } = useDraggable({

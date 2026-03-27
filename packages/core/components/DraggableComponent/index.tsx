@@ -105,6 +105,7 @@ export const DraggableComponent = ({
   label,
   autoDragAxis,
   userDragAxis,
+  insertData,
   inDroppableZone = true,
 }: {
   children: (ref: Ref<any>) => ReactNode;
@@ -119,6 +120,7 @@ export const DraggableComponent = ({
   isLoading: boolean;
   autoDragAxis: DragAxis;
   userDragAxis?: DragAxis;
+  insertData?: ComponentData;
   inDroppableZone: boolean;
 }) => {
   const zoom = useAppStore((s) =>
@@ -202,6 +204,7 @@ export const DraggableComponent = ({
       zone: zoneCompound,
       index,
       componentType,
+      insertData,
       containsActiveZone,
       depth,
       path: path || [],

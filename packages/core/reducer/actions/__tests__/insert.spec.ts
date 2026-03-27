@@ -140,6 +140,71 @@ describe("Reducer", () => {
         expect(item?.props).toHaveProperty("prop", "example");
         expectIndexed(state, item, [rootDroppableId, dzZoneCompound], 0);
       });
+
+      it("should insert provided data with nested slot content into a slot", () => {
+        const state: PrivateAppState<UserData> = defaultState;
+
+        const action: InsertAction = {
+          type: "insert",
+          componentType: "Comp",
+          destinationIndex: 0,
+          destinationZone: "root:slot",
+          id: "inserted-root",
+          data: {
+            type: "Comp",
+            props: {
+              id: "favorite-root",
+              prop: "Favorite root",
+              slot: [
+                {
+                  type: "Comp",
+                  props: {
+                    id: "favorite-child",
+                    prop: "Favorite child",
+                    slot: [
+                      {
+                        type: "Comp",
+                        props: {
+                          id: "favorite-grandchild",
+                          prop: "Favorite grandchild",
+                          slot: [],
+                          slotArray: [],
+                        },
+                      },
+                    ],
+                    slotArray: [],
+                  },
+                },
+              ],
+              slotArray: [],
+            },
+          },
+        };
+
+        const newState = reducer(state, action) as PrivateAppState<UserData>;
+
+        const item = newState.data.root.props?.slot[0];
+        const child = item?.props.slot[0];
+        const grandchild = child?.props.slot[0];
+
+        expect(item).toHaveProperty("type", "Comp");
+        expect(item?.props.id).toEqual("inserted-root");
+        expect(item?.props.prop).toEqual("Favorite root");
+        expectIndexed(newState, item, ["root:slot"], 0);
+
+        expect(child?.props.id).toEqual("mockId-1");
+        expect(child?.props.prop).toEqual("Favorite child");
+        expectIndexed(newState, child, ["root:slot", "inserted-root:slot"], 0);
+
+        expect(grandchild?.props.id).toEqual("mockId-2");
+        expect(grandchild?.props.prop).toEqual("Favorite grandchild");
+        expectIndexed(
+          newState,
+          grandchild,
+          ["root:slot", "inserted-root:slot", "mockId-1:slot"],
+          0
+        );
+      });
     });
   });
 });

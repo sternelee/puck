@@ -280,6 +280,7 @@ const DragDropContextClient = ({
   const dragMode = useRef<"new" | "existing" | null>(null);
 
   const initialSelector = useRef<{ zone: string; index: number }>(undefined);
+  const pendingInsertData = useRef<ComponentDndData["insertData"]>(undefined);
 
   const nextContextValue = useMemo<DropZoneContext>(
     () => ({
@@ -315,6 +316,7 @@ const DragDropContextClient = ({
           const { zone, index } = source.data as ComponentDndData;
 
           const { previewIndex = {} } = zoneStore.getState() || {};
+          const activeInsertData = pendingInsertData.current;
 
           const thisPreview: Preview | null =
             previewIndex[zone]?.props.id === source.id
@@ -337,8 +339,8 @@ const DragDropContextClient = ({
                     thisPreview.componentType,
                     thisPreview.zone,
                     thisPreview.index,
-                  appStore,
-                  thisPreview.insertData
+                    appStore,
+                    thisPreview.insertData ?? activeInsertData
                   );
                 } else if (initialSelector.current) {
                   moveComponent(
@@ -375,7 +377,7 @@ const DragDropContextClient = ({
                   thisPreview.zone,
                   thisPreview.index,
                   appStore,
-                  thisPreview.insertData
+                  thisPreview.insertData ?? activeInsertData
                 );
               } else if (initialSelector.current) {
                 dispatch({
@@ -446,6 +448,27 @@ const DragDropContextClient = ({
             targetZone = targetData.zone;
             targetIndex = targetData.index;
 
+            if (dragMode.current === "new" && targetData.containsActiveZone) {
+              const deepestZone = Object.keys(zoneStore.getState().zoneDepthIndex)[0];
+              const deepestZoneContent =
+                deepestZone
+                  ? appStore.getState().state.indexes.zones[deepestZone]?.contentIds
+                  : undefined;
+
+              // Empty slot containers can still collide as components. In that case,
+              // prefer the active slot as the insertion target instead of inserting
+              // alongside the container itself.
+              if (
+                deepestZone &&
+                deepestZone !== targetData.zone &&
+                deepestZoneContent &&
+                deepestZoneContent.length === 0
+              ) {
+                targetZone = deepestZone;
+                targetIndex = 0;
+              }
+            }
+
             const collisionData = manager.collisionObserver.collisions[0]?.data;
 
             const dir = getDeepDir(target.element);
@@ -485,6 +508,7 @@ const DragDropContextClient = ({
 
           if (dragMode.current === "new") {
             const previewData = sourceData.previewData;
+            const insertData = sourceData.insertData ?? pendingInsertData.current;
 
             zoneStore.setState({
               previewIndex: {
@@ -494,7 +518,7 @@ const DragDropContextClient = ({
                   index: targetIndex,
                   zone: targetZone,
                   element: source.element,
-                  insertData: sourceData.insertData,
+                  insertData,
                   props: {
                     ...(previewData?.data.props || {}),
                     id: source.id.toString(),
@@ -571,9 +595,15 @@ const DragDropContextClient = ({
         }}
         onBeforeDragStart={(event) => {
           const isNewComponent = event.operation.source?.type === "drawer";
+          const sourceData = event.operation.source?.data as
+            | ComponentDndData
+            | undefined;
 
           dragMode.current = isNewComponent ? "new" : "existing";
           initialSelector.current = undefined;
+          pendingInsertData.current = isNewComponent
+            ? sourceData?.insertData
+            : undefined;
 
           zoneStore.setState({ draggedItem: event.operation.source });
 

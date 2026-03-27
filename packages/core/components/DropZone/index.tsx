@@ -149,6 +149,7 @@ const DropZoneChild = ({
         props: preview.props,
         previewType: preview.type,
         element: preview.element,
+        insertData: preview.insertData,
       };
     }
 
@@ -249,6 +250,7 @@ const DropZoneChild = ({
       label={label}
       autoDragAxis={dragAxis}
       userDragAxis={collisionAxis}
+      insertData={"insertData" in item ? item.insertData : undefined}
       inDroppableZone={inDroppableZone}
     >
       {(dragRef) => {
