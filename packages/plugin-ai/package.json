@@ -1,9 +1,9 @@
 {
   "name": "puckeditor-plugin-ai",
-  "version": "0.6.4",
-  "author": "Chris Villa <chris@puckeditor.com>",
+  "version": "0.6.5",
+  "author": "sternelee <sternelee@gmail.com>",
   "repository": "puckeditor/puck",
-  "bugs": "https://github.com/puckeditor/puck/issues",
+  "bugs": "https://github.com/sternelee/puck/issues",
   "homepage": "https://puckeditor.com",
   "keywords": [
     "puck-ecosystem",
