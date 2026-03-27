@@ -280,6 +280,11 @@ export type AiSettings = {
   urlContext: boolean;
   googleSearch: boolean;
   enterpriseWebSearch: boolean;
+  /**
+   * When migrating from a page URL, run the full browser pipeline (DOM bundle + structured IR).
+   * Slower and uses more Worker time; leave off for screenshot-only + Vertex url_context.
+   */
+  pageMigrationIr: boolean;
   figmaToken: string;
 };
 
@@ -288,6 +293,7 @@ const DEFAULT_AI_SETTINGS: AiSettings = {
   urlContext: false,
   googleSearch: false,
   enterpriseWebSearch: false,
+  pageMigrationIr: false,
   figmaToken: "",
 };
 
@@ -660,7 +666,9 @@ function FileMessagePart({
   if (isImage) {
     return (
       <div
-        className={`puck-ai-chat-message-file${role === "user" ? " puck-ai-chat-message-file--user" : ""}`}
+        className={`puck-ai-chat-message-file${
+          role === "user" ? " puck-ai-chat-message-file--user" : ""
+        }`}
       >
         <img
           src={part.url}
@@ -668,28 +676,42 @@ function FileMessagePart({
           className="puck-ai-chat-message-file-image"
         />
         {part.filename ? (
-          <span className="puck-ai-chat-message-file-caption">{part.filename}</span>
+          <span className="puck-ai-chat-message-file-caption">
+            {part.filename}
+          </span>
         ) : null}
       </div>
     );
   }
   return (
     <div className="puck-ai-chat-message-file puck-ai-chat-message-file--document">
-      <a href={part.url} target="_blank" rel="noopener noreferrer" download={part.filename}>
+      <a
+        href={part.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        download={part.filename}
+      >
         {part.filename ?? part.mediaType}
       </a>
     </div>
   );
 }
 
-function ReasoningMessagePart({ part }: { part: { text: string; state?: string } }) {
+function ReasoningMessagePart({
+  part,
+}: {
+  part: { text: string; state?: string };
+}) {
   const streaming = part.state === "streaming";
   return (
     <details className="puck-ai-chat-message-reasoning" open={streaming}>
       <summary className="puck-ai-chat-message-reasoning-summary">
         Reasoning
         {streaming ? (
-          <span className="puck-ai-chat-message-reasoning-streaming" aria-live="polite">
+          <span
+            className="puck-ai-chat-message-reasoning-streaming"
+            aria-live="polite"
+          >
             <Loader size={12} />
           </span>
         ) : null}
@@ -715,7 +737,9 @@ function SdkToolInvocation({ part }: { part: ToolUIPart | DynamicToolUIPart }) {
   else stateLabel = state;
 
   const loading =
-    state === "input-streaming" || state === "input-available" || state === "approval-requested";
+    state === "input-streaming" ||
+    state === "input-available" ||
+    state === "approval-requested";
 
   const input = "input" in part ? part.input : undefined;
   const output = "output" in part ? part.output : undefined;
@@ -739,10 +763,14 @@ function SdkToolInvocation({ part }: { part: ToolUIPart | DynamicToolUIPart }) {
       <details className="puck-ai-chat-message-tool-details">
         <summary>Input / output</summary>
         {input !== undefined ? (
-          <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(input)}</pre>
+          <pre className="puck-ai-chat-message-tool-pre">
+            {safeJsonPreview(input)}
+          </pre>
         ) : null}
         {state === "output-available" && output !== undefined ? (
-          <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(output)}</pre>
+          <pre className="puck-ai-chat-message-tool-pre">
+            {safeJsonPreview(output)}
+          </pre>
         ) : null}
       </details>
     </div>
@@ -770,21 +798,32 @@ function DataMessagePart({ part }: { part: DataUIPart<PuckDataParts> }) {
     const d = part.data as DataFinish;
     return (
       <div className="puck-ai-chat-message-data-summary">
-        Tokens: in {d.tokenUsage?.inputTokens ?? "—"} · out {d.tokenUsage?.outputTokens ?? "—"}
+        Tokens: in {d.tokenUsage?.inputTokens ?? "—"} · out{" "}
+        {d.tokenUsage?.outputTokens ?? "—"}
         {d.totalCost !== undefined ? ` · cost ${d.totalCost}` : ""}
       </div>
     );
   }
   if (part.type === "data-page") {
-    return <div className="puck-ai-chat-message-data-summary">Page snapshot attached</div>;
+    return (
+      <div className="puck-ai-chat-message-data-summary">
+        Page snapshot attached
+      </div>
+    );
   }
-  if (part.type === "data-new-chat-created" || part.type === "data-tool-status" || part.type === "data-send-screenshot") {
+  if (
+    part.type === "data-new-chat-created" ||
+    part.type === "data-tool-status" ||
+    part.type === "data-send-screenshot"
+  ) {
     return null;
   }
   return (
     <details className="puck-ai-chat-message-data-raw">
       <summary>{part.type.replace(/^data-/, "")}</summary>
-      <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(part.data)}</pre>
+      <pre className="puck-ai-chat-message-tool-pre">
+        {safeJsonPreview(part.data)}
+      </pre>
     </details>
   );
 }
@@ -824,7 +863,9 @@ function ChatMessagePart({ part, role }: { part: any; role: string }) {
     return (
       <div className="puck-ai-chat-message-source">
         <span title={part.filename}>{part.title}</span>
-        <span className="puck-ai-chat-message-source-meta">{part.mediaType}</span>
+        <span className="puck-ai-chat-message-source-meta">
+          {part.mediaType}
+        </span>
       </div>
     );
   }
@@ -1497,6 +1538,24 @@ function SettingsPanel({
           <div className="puck-ai-settings-row">
             <label
               className="puck-ai-settings-label"
+              htmlFor="puck-ai-page-migration-ir"
+            >
+              Page migration IR
+              <span className="puck-ai-settings-hint">
+                Full DOM bundle + structured plan when a source URL is captured
+                (slower; screenshot-only when off)
+              </span>
+            </label>
+            <Toggle
+              id="puck-ai-page-migration-ir"
+              checked={settings.pageMigrationIr}
+              onChange={(v) => onChange({ pageMigrationIr: v })}
+            />
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
               htmlFor="puck-ai-google-search"
             >
               Google Search
@@ -1579,10 +1638,14 @@ function SettingsPanel({
         <div className="puck-ai-settings-section">
           <div className="puck-ai-settings-section-title">Chat</div>
           <div className="puck-ai-settings-row puck-ai-settings-row--column">
-            <label className="puck-ai-settings-label" htmlFor="puck-ai-clear-chat">
+            <label
+              className="puck-ai-settings-label"
+              htmlFor="puck-ai-clear-chat"
+            >
               Clear chat history
               <span className="puck-ai-settings-hint">
-                Remove all messages and reset the conversation context for this session.
+                Remove all messages and reset the conversation context for this
+                session.
               </span>
             </label>
             <button
@@ -1752,6 +1815,8 @@ export function Chat({
         if (currentSettings.thinkingLevel !== "none")
           geminiConfig.thinkingLevel = currentSettings.thinkingLevel;
         if (currentSettings.urlContext) geminiConfig.urlContext = true;
+        if (currentSettings.pageMigrationIr)
+          geminiConfig.pageMigrationIr = true;
         if (currentSettings.googleSearch) geminiConfig.googleSearch = true;
         if (currentSettings.enterpriseWebSearch)
           geminiConfig.enterpriseWebSearch = true;
