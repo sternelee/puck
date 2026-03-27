@@ -43,6 +43,7 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Settings,
+  Trash2,
   TriangleAlert,
   Wrench,
   X,
@@ -1313,9 +1314,13 @@ function Toggle({
 function SettingsPanel({
   settings,
   onChange,
+  onClearChatHistory,
+  hasChatMessages,
 }: {
   settings: AiSettings;
   onChange: (update: Partial<AiSettings>) => void;
+  onClearChatHistory: () => void;
+  hasChatMessages: boolean;
 }) {
   const [showToken, setShowToken] = useState(false);
 
@@ -1418,6 +1423,28 @@ function SettingsPanel({
             <span className="puck-ai-settings-hint" style={{ marginTop: 4 }}>
               Paste a Figma URL in chat to generate from your design. Token overrides server config.
             </span>
+          </div>
+        </div>
+
+        <div className="puck-ai-settings-section">
+          <div className="puck-ai-settings-section-title">Chat</div>
+          <div className="puck-ai-settings-row puck-ai-settings-row--column">
+            <label className="puck-ai-settings-label" htmlFor="puck-ai-clear-chat">
+              Clear chat history
+              <span className="puck-ai-settings-hint">
+                Remove all messages and reset the conversation context for this session.
+              </span>
+            </label>
+            <button
+              id="puck-ai-clear-chat"
+              type="button"
+              className="puck-ai-settings-clear-chat"
+              disabled={!hasChatMessages}
+              onClick={onClearChatHistory}
+            >
+              <Trash2 size={14} aria-hidden />
+              Clear messages
+            </button>
           </div>
         </div>
       </div>
@@ -1707,6 +1734,18 @@ export function Chat({
     }));
   }, [messages, toolStatus]);
 
+  const handleClearChatHistory = useCallback(() => {
+    if (!window.confirm("Clear all messages in this chat?")) return;
+    setMessages([]);
+    setToolStatus({});
+    setError(undefined);
+    localChatId.current = "";
+    setPromptValue("");
+    setAttachedImages([]);
+    pendingSendImagesRef.current = [];
+    setForcedStatus(undefined);
+  }, [setMessages]);
+
   return (
     <div className="puck-ai-chat" ref={pluginRef}>
       <div className="puck-ai-chat-header">
@@ -1735,7 +1774,12 @@ export function Chat({
         )}
       </div>
       {showSettings ? (
-        <SettingsPanel settings={aiSettings} onChange={setAiSettings} />
+        <SettingsPanel
+          settings={aiSettings}
+          onChange={setAiSettings}
+          onClearChatHistory={handleClearChatHistory}
+          hasChatMessages={(messages as PuckMessage[]).length > 0}
+        />
       ) : (
         <ToolStatusProvider value={toolStatus}>
           <ChatBody

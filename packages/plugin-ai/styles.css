@@ -1085,3 +1085,35 @@
   color: var(--puck-color-azure-05);
   text-decoration: underline;
 }
+
+.puck-ai-settings-clear-chat {
+  align-items: center;
+  align-self: flex-start;
+  appearance: none;
+  background: var(--puck-color-white);
+  border: 1px solid var(--puck-color-red-04);
+  border-radius: 6px;
+  color: var(--puck-color-red-04);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 12px;
+}
+
+.puck-ai-settings-clear-chat:hover:not(:disabled) {
+  background: var(--puck-color-grey-12);
+}
+
+.puck-ai-settings-clear-chat:focus-visible {
+  outline: 2px solid var(--puck-color-azure-04);
+  outline-offset: 2px;
+}
+
+.puck-ai-settings-clear-chat:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
