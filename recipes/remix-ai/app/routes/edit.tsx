@@ -1,6 +1,6 @@
-import { Puck, type Data, type Config } from "puckeditor-core";
+import { Puck, type Data, type Config } from "pika-editor-core";
 import { createAiPlugin } from "@puckeditor/plugin-ai";
-import styles from "puckeditor-core/puck.css";
+import styles from "pika-editor-core/puck.css";
 import pluginStyles from "@puckeditor/plugin-ai/styles.css";
 import type {
   ActionFunctionArgs,

@@ -16,8 +16,8 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./app/*"],
-      "puckeditor-core": ["../../packages/core/index.ts"],
-      "puckeditor-core/puck.css": ["../../packages/core/bundle/index.css"]
+      "pika-editor-core": ["../../packages/core/index.ts"],
+      "pika-editor-core/puck.css": ["../../packages/core/bundle/index.css"]
     },
     "esModuleInterop": true,
     "verbatimModuleSyntax": true,

@@ -342,7 +342,7 @@ importers:
       eslint-config-custom:
         specifier: workspace:*
         version: link:../eslint-config-custom
-      puckeditor-core:
+      pika-editor-core:
         specifier: ^0.21.1
         version: 0.21.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
       tsconfig:
@@ -403,7 +403,7 @@ importers:
       lucide-react:
         specifier: ^0.452.0
         version: 0.452.0(react@19.2.4)
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../core
       tsconfig:
@@ -443,7 +443,7 @@ importers:
       eslint-config-custom:
         specifier: workspace:*
         version: link:../eslint-config-custom
-      puckeditor-core:
+      pika-editor-core:
         specifier: ^0.21.1
         version: 0.21.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
       tsconfig:
@@ -483,7 +483,7 @@ importers:
       eslint-config-custom:
         specifier: workspace:*
         version: link:../eslint-config-custom
-      puckeditor-core:
+      pika-editor-core:
         specifier: ^0.21.1
         version: 0.21.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
       tsconfig:
@@ -531,7 +531,7 @@ importers:
       astro:
         specifier: ^5.0.0
         version: 5.18.1(@types/node@24.11.0)(less@4.5.1)(rollup@4.59.0)(sass@1.97.3)(stylus@0.62.0)(typescript@5.9.3)(yaml@2.8.2)
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -559,7 +559,7 @@ importers:
       next:
         specifier: ^16.0.8
         version: 16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3)
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -599,7 +599,7 @@ importers:
       next:
         specifier: ^16.0.8
         version: 16.1.6(@opentelemetry/api@1.9.0)(babel-plugin-macros@3.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(sass@1.97.3)
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -636,7 +636,7 @@ importers:
       isbot:
         specifier: ^5
         version: 5.1.35
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -688,7 +688,7 @@ importers:
       isbot:
         specifier: ^5
         version: 5.1.35
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -740,7 +740,7 @@ importers:
       isbot:
         specifier: ^3.6.8
         version: 3.8.0
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -795,7 +795,7 @@ importers:
       isbot:
         specifier: ^3.6.8
         version: 3.8.0
-      puckeditor-core:
+      pika-editor-core:
         specifier: workspace:*
         version: link:../../packages/core
       react:
@@ -9241,7 +9241,7 @@ packages:
   prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
 
-  puckeditor-core@0.21.3:
+  pika-editor-core@0.21.3:
     resolution: {integrity: sha512-3wNh51ZDH8sGx8mEl+P5JhFar0/bNHKHIlcotai0JSpvDLe1NzamDnfpEWu6ySY7UNLs+4+pS1Cn63FCd3TukA==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -22145,7 +22145,7 @@ snapshots:
   prr@1.0.1:
     optional: true
 
-  puckeditor-core@0.21.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4)):
+  pika-editor-core@0.21.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4)):
     dependencies:
       '@dnd-kit/helpers': 0.1.18
       '@dnd-kit/react': 0.1.18(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

@@ -1,12 +1,12 @@
 import { useFetcher, useLoaderData } from "react-router";
-import type { Data } from "puckeditor-core";
-import { Puck, Render } from "puckeditor-core";
+import type { Data } from "pika-editor-core";
+import { Puck, Render } from "pika-editor-core";
 
 import type { Route } from "./+types/puck-splat";
 import { config } from "../../puck.config";
 import { resolvePuckPath } from "~/lib/resolve-puck-path.server";
 import { getPage, savePage } from "~/lib/pages.server";
-import editorStyles from "puckeditor-core/puck.css?url";
+import editorStyles from "pika-editor-core/puck.css?url";
 
 export async function loader({ params }: Route.LoaderArgs) {
   const pathname = params["*"] ?? "/";

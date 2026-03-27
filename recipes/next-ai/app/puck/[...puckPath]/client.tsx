@@ -1,7 +1,7 @@
 "use client";
 
-import type { Data } from "puckeditor-core";
-import { Puck } from "puckeditor-core";
+import type { Data } from "pika-editor-core";
+import { Puck } from "pika-editor-core";
 import { createAiPlugin } from "@puckeditor/plugin-ai";
 
 import config from "../../../puck.config";

@@ -11,8 +11,8 @@ import {
   type ReactNode,
   type ReactElement,
 } from "react";
-import type { PuckAction, Data, Config, Plugin } from "puckeditor-core";
-import { useGetPuck, createUsePuck } from "puckeditor-core";
+import type { PuckAction, Data, Config, Plugin } from "pika-editor-core";
+import { useGetPuck, createUsePuck } from "pika-editor-core";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
@@ -351,8 +351,8 @@ export type AiPluginProps = {
   };
 };
 
-// Extend puckeditor-core types
-declare module "puckeditor-core" {
+// Extend pika-editor-core types
+declare module "pika-editor-core" {
   export interface ComponentMetadata {
     ai?: ComponentAiParams;
   }
