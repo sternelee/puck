@@ -16,11 +16,19 @@ import { useGetPuck, createUsePuck } from "puckeditor-core";
 import { useChat } from "@ai-sdk/react";
 import {
   DefaultChatTransport,
-  type UIMessage,
+  getToolName,
+  isDataUIPart,
+  isFileUIPart,
+  isReasoningUIPart,
+  isTextUIPart,
+  isToolUIPart,
   type DataUIPart,
+  type DynamicToolUIPart,
   type ChatStatus,
   type CreateUIMessage,
   type LanguageModelUsage,
+  type ToolUIPart,
+  type UIMessage,
 } from "ai";
 import ReactMarkdown from "react-markdown";
 import TextareaAutosize from "react-textarea-autosize";
@@ -35,7 +43,9 @@ import {
   Image as ImageIcon,
   RotateCcw,
   Settings,
+  Trash2,
   TriangleAlert,
+  Wrench,
   X,
 } from "lucide-react";
 import qler from "qler";
@@ -589,20 +599,173 @@ function ToolStatusDisplay({ status }: { status: ToolStatus }) {
 function PuckTool({
   toolCallId,
   output,
+  status: mergedStatus,
   defaultLabel = "Thinking...",
 }: {
   toolCallId: string;
   output?: any;
+  status?: ToolStatus;
   defaultLabel?: string;
 }) {
   const toolStatusMap = useContext(toolStatusContext);
   const contextStatus = toolStatusMap[toolCallId];
   const outputObj = output as any;
   const status: ToolStatus =
-    outputObj && "status" in outputObj
+    mergedStatus ??
+    (outputObj && "status" in outputObj
       ? outputObj.status
-      : contextStatus ?? { loading: true, label: defaultLabel };
+      : contextStatus ?? { loading: true, label: defaultLabel });
   return <ToolStatusDisplay status={status} />;
+}
+
+function safeJsonPreview(value: unknown, maxLen = 4000): string {
+  try {
+    const s = JSON.stringify(value, null, 2);
+    if (s.length <= maxLen) return s;
+    return `${s.slice(0, maxLen)}\n…`;
+  } catch {
+    return String(value);
+  }
+}
+
+function FileMessagePart({
+  part,
+  role,
+}: {
+  part: { mediaType: string; url: string; filename?: string };
+  role: string;
+}) {
+  const isImage = part.mediaType.startsWith("image/");
+  if (isImage) {
+    return (
+      <div
+        className={`puck-ai-chat-message-file${role === "user" ? " puck-ai-chat-message-file--user" : ""}`}
+      >
+        <img
+          src={part.url}
+          alt={part.filename ?? "Attached image"}
+          className="puck-ai-chat-message-file-image"
+        />
+        {part.filename ? (
+          <span className="puck-ai-chat-message-file-caption">{part.filename}</span>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <div className="puck-ai-chat-message-file puck-ai-chat-message-file--document">
+      <a href={part.url} target="_blank" rel="noopener noreferrer" download={part.filename}>
+        {part.filename ?? part.mediaType}
+      </a>
+    </div>
+  );
+}
+
+function ReasoningMessagePart({ part }: { part: { text: string; state?: string } }) {
+  const streaming = part.state === "streaming";
+  return (
+    <details className="puck-ai-chat-message-reasoning" open={streaming}>
+      <summary className="puck-ai-chat-message-reasoning-summary">
+        Reasoning
+        {streaming ? (
+          <span className="puck-ai-chat-message-reasoning-streaming" aria-live="polite">
+            <Loader size={12} />
+          </span>
+        ) : null}
+      </summary>
+      <div className="puck-ai-chat-message-reasoning-body">
+        <ReactMarkdown>{part.text}</ReactMarkdown>
+      </div>
+    </details>
+  );
+}
+
+function SdkToolInvocation({ part }: { part: ToolUIPart | DynamicToolUIPart }) {
+  const name = getToolName(part);
+  const state = part.state;
+  let stateLabel: string;
+  if (state === "input-streaming") stateLabel = "Preparing…";
+  else if (state === "input-available") stateLabel = "Running…";
+  else if (state === "output-available") stateLabel = "Done";
+  else if (state === "output-error") stateLabel = "Error";
+  else if (state === "approval-requested") stateLabel = "Awaiting approval";
+  else if (state === "approval-responded") stateLabel = "Approval recorded";
+  else if (state === "output-denied") stateLabel = "Denied";
+  else stateLabel = state;
+
+  const loading =
+    state === "input-streaming" || state === "input-available" || state === "approval-requested";
+
+  const input = "input" in part ? part.input : undefined;
+  const output = "output" in part ? part.output : undefined;
+  const errorText = "errorText" in part ? part.errorText : undefined;
+
+  return (
+    <div className="puck-ai-chat-message-tool">
+      <div className="puck-ai-chat-message-tool-header">
+        <span className="puck-ai-chat-message-tool-icon" aria-hidden>
+          <Wrench size={14} />
+        </span>
+        <span className="puck-ai-chat-message-tool-name">{name}</span>
+        <span className="puck-ai-chat-message-tool-state">
+          {loading ? <Loader size={12} /> : null}
+          {stateLabel}
+        </span>
+      </div>
+      {state === "output-error" && errorText ? (
+        <div className="puck-ai-chat-message-tool-error">{errorText}</div>
+      ) : null}
+      <details className="puck-ai-chat-message-tool-details">
+        <summary>Input / output</summary>
+        {input !== undefined ? (
+          <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(input)}</pre>
+        ) : null}
+        {state === "output-available" && output !== undefined ? (
+          <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(output)}</pre>
+        ) : null}
+      </details>
+    </div>
+  );
+}
+
+function DataMessagePart({ part }: { part: DataUIPart<PuckDataParts> }) {
+  if (part.type === "data-puck-actions") {
+    const actions = part.data as PuckAction[];
+    return (
+      <div className="puck-ai-chat-message-data-summary">
+        Applied {actions.length} editor action{actions.length === 1 ? "" : "s"}
+      </div>
+    );
+  }
+  if (part.type === "data-build-op") {
+    const op = part.data as Operation;
+    return (
+      <div className="puck-ai-chat-message-data-summary">
+        Build operation: <code>{op.op}</code>
+      </div>
+    );
+  }
+  if (part.type === "data-finish") {
+    const d = part.data as DataFinish;
+    return (
+      <div className="puck-ai-chat-message-data-summary">
+        Tokens: in {d.tokenUsage?.inputTokens ?? "—"} · out {d.tokenUsage?.outputTokens ?? "—"}
+        {d.totalCost !== undefined ? ` · cost ${d.totalCost}` : ""}
+      </div>
+    );
+  }
+  if (part.type === "data-page") {
+    return <div className="puck-ai-chat-message-data-summary">Page snapshot attached</div>;
+  }
+  if (part.type === "data-new-chat-created" || part.type === "data-tool-status" || part.type === "data-send-screenshot") {
+    return null;
+  }
+  return (
+    <details className="puck-ai-chat-message-data-raw">
+      <summary>{part.type.replace(/^data-/, "")}</summary>
+      <pre className="puck-ai-chat-message-tool-pre">{safeJsonPreview(part.data)}</pre>
+    </details>
+  );
 }
 
 // ============================================================
@@ -610,7 +773,7 @@ function PuckTool({
 // ============================================================
 
 function ChatMessagePart({ part, role }: { part: any; role: string }) {
-  if (part.type === "text") {
+  if (isTextUIPart(part)) {
     return (
       <div className="puck-ai-chat-message-text">
         {role === "assistant" || role === "user" ? (
@@ -621,12 +784,44 @@ function ChatMessagePart({ part, role }: { part: any; role: string }) {
       </div>
     );
   }
-  if (
-    part.type === "tool-createPage" ||
-    part.type === "tool-updatePage" ||
-    part.type === "tool-userTool"
-  ) {
-    return <PuckTool {...part} />;
+  if (isReasoningUIPart(part)) {
+    return <ReasoningMessagePart part={part} />;
+  }
+  if (isFileUIPart(part)) {
+    return <FileMessagePart part={part} role={role} />;
+  }
+  if (part.type === "source-url") {
+    return (
+      <div className="puck-ai-chat-message-source">
+        <a href={part.url} target="_blank" rel="noopener noreferrer">
+          {part.title ?? part.url}
+        </a>
+      </div>
+    );
+  }
+  if (part.type === "source-document") {
+    return (
+      <div className="puck-ai-chat-message-source">
+        <span title={part.filename}>{part.title}</span>
+        <span className="puck-ai-chat-message-source-meta">{part.mediaType}</span>
+      </div>
+    );
+  }
+  if (part.type === "step-start") {
+    return <div className="puck-ai-chat-message-step" aria-hidden />;
+  }
+  if (isToolUIPart(part)) {
+    if (
+      part.type === "tool-createPage" ||
+      part.type === "tool-updatePage" ||
+      part.type === "tool-userTool"
+    ) {
+      return <PuckTool {...part} />;
+    }
+    return <SdkToolInvocation part={part} />;
+  }
+  if (isDataUIPart(part)) {
+    return <DataMessagePart part={part as DataUIPart<PuckDataParts>} />;
   }
   return null;
 }
@@ -1220,9 +1415,13 @@ function Toggle({
 function SettingsPanel({
   settings,
   onChange,
+  onClearChatHistory,
+  hasChatMessages,
 }: {
   settings: AiSettings;
   onChange: (update: Partial<AiSettings>) => void;
+  onClearChatHistory: () => void;
+  hasChatMessages: boolean;
 }) {
   const [showToken, setShowToken] = useState(false);
 
@@ -1353,6 +1552,28 @@ function SettingsPanel({
               Paste a Figma URL in chat to generate from your design. Token
               overrides server config.
             </span>
+          </div>
+        </div>
+
+        <div className="puck-ai-settings-section">
+          <div className="puck-ai-settings-section-title">Chat</div>
+          <div className="puck-ai-settings-row puck-ai-settings-row--column">
+            <label className="puck-ai-settings-label" htmlFor="puck-ai-clear-chat">
+              Clear chat history
+              <span className="puck-ai-settings-hint">
+                Remove all messages and reset the conversation context for this session.
+              </span>
+            </label>
+            <button
+              id="puck-ai-clear-chat"
+              type="button"
+              className="puck-ai-settings-clear-chat"
+              disabled={!hasChatMessages}
+              onClick={onClearChatHistory}
+            >
+              <Trash2 size={14} aria-hidden />
+              Clear messages
+            </button>
           </div>
         </div>
       </div>
@@ -1653,6 +1874,18 @@ export function Chat({
     }));
   }, [messages, toolStatus]);
 
+  const handleClearChatHistory = useCallback(() => {
+    if (!window.confirm("Clear all messages in this chat?")) return;
+    setMessages([]);
+    setToolStatus({});
+    setError(undefined);
+    localChatId.current = "";
+    setPromptValue("");
+    setAttachedImages([]);
+    pendingSendImagesRef.current = [];
+    setForcedStatus(undefined);
+  }, [setMessages]);
+
   return (
     <div className="puck-ai-chat" ref={pluginRef}>
       <div className="puck-ai-chat-header">
@@ -1681,7 +1914,12 @@ export function Chat({
         )}
       </div>
       {showSettings ? (
-        <SettingsPanel settings={aiSettings} onChange={setAiSettings} />
+        <SettingsPanel
+          settings={aiSettings}
+          onChange={setAiSettings}
+          onClearChatHistory={handleClearChatHistory}
+          hasChatMessages={(messages as PuckMessage[]).length > 0}
+        />
       ) : (
         <ToolStatusProvider value={toolStatus}>
           <ChatBody

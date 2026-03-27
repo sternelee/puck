@@ -400,6 +400,196 @@
   display: flex;
 }
 
+.puck-ai-chat-message-file {
+  margin-bottom: 8px;
+  margin-top: 8px;
+}
+
+.puck-ai-chat-message-file--user {
+  margin-left: 24px;
+}
+
+.puck-ai-chat-message-file-image {
+  border-radius: 12px;
+  display: block;
+  max-height: 220px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.puck-ai-chat-message-file--user .puck-ai-chat-message-file-image {
+  background: var(--puck-color-azure-10);
+  border: 1px solid var(--puck-color-azure-08);
+}
+
+.puck-ai-chat-message-file-caption {
+  color: var(--puck-color-grey-05);
+  display: block;
+  font-size: var(--puck-font-size-xxxs);
+  margin-top: 4px;
+}
+
+.puck-ai-chat-message-file--document {
+  background: var(--puck-color-azure-10);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.puck-ai-chat-message-file--document a {
+  word-break: break-all;
+}
+
+.puck-ai-chat-message-reasoning {
+  background: var(--puck-color-grey-11);
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 10px;
+  color: var(--puck-color-grey-04);
+  font-size: var(--puck-font-size-xxxs);
+  margin-bottom: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+}
+
+.puck-ai-chat-message-reasoning-summary {
+  cursor: pointer;
+  font-weight: 600;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.puck-ai-chat-message-reasoning-summary::-webkit-details-marker {
+  display: none;
+}
+
+.puck-ai-chat-message-reasoning-streaming {
+  display: inline-flex;
+  align-items: center;
+}
+
+.puck-ai-chat-message-reasoning-body {
+  border-top: 1px solid var(--puck-color-grey-09);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.puck-ai-chat-message-reasoning-body p {
+  margin: 0 0 6px;
+}
+
+.puck-ai-chat-message-source {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  margin-bottom: 6px;
+  margin-top: 6px;
+}
+
+.puck-ai-chat-message-source-meta {
+  color: var(--puck-color-grey-07);
+  margin-left: 6px;
+}
+
+.puck-ai-chat-message-step {
+  border-top: 1px dashed var(--puck-color-grey-09);
+  margin: 8px 0;
+  opacity: 0.6;
+}
+
+.puck-ai-chat-message-tool {
+  background: var(--puck-color-grey-12);
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 12px;
+  margin-bottom: 8px;
+  margin-top: 8px;
+  margin-right: 24px;
+  padding: 8px 12px;
+}
+
+.puck-ai-chat-message-tool-header {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.puck-ai-chat-message-tool-icon {
+  color: var(--puck-color-grey-06);
+  display: flex;
+}
+
+.puck-ai-chat-message-tool-name {
+  font-weight: 600;
+  color: var(--puck-color-grey-03);
+}
+
+.puck-ai-chat-message-tool-state {
+  align-items: center;
+  color: var(--puck-color-grey-05);
+  display: inline-flex;
+  font-size: var(--puck-font-size-xxxs);
+  gap: 6px;
+  margin-left: auto;
+}
+
+.puck-ai-chat-message-tool-error {
+  color: var(--puck-color-red-04);
+  font-size: var(--puck-font-size-xxxs);
+  margin-top: 6px;
+}
+
+.puck-ai-chat-message-tool-details {
+  margin-top: 8px;
+}
+
+.puck-ai-chat-message-tool-details summary {
+  color: var(--puck-color-azure-04);
+  cursor: pointer;
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+  list-style: none;
+}
+
+.puck-ai-chat-message-tool-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.puck-ai-chat-message-tool-pre {
+  background: var(--puck-color-grey-11);
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.45;
+  margin-top: 6px;
+  max-height: 200px;
+  overflow: auto;
+  padding: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.puck-ai-chat-message-data-summary {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  margin-bottom: 6px;
+  margin-top: 6px;
+}
+
+.puck-ai-chat-message-data-raw {
+  margin-bottom: 6px;
+  margin-top: 6px;
+}
+
+.puck-ai-chat-message-data-raw summary {
+  color: var(--puck-color-grey-05);
+  cursor: pointer;
+  font-size: var(--puck-font-size-xxxs);
+  list-style: none;
+}
+
+.puck-ai-chat-message-data-raw summary::-webkit-details-marker {
+  display: none;
+}
+
 /* ============================================================
    Target component banner
    ============================================================ */
@@ -894,4 +1084,36 @@
 .puck-ai-settings-link:hover {
   color: var(--puck-color-azure-05);
   text-decoration: underline;
+}
+
+.puck-ai-settings-clear-chat {
+  align-items: center;
+  align-self: flex-start;
+  appearance: none;
+  background: var(--puck-color-white);
+  border: 1px solid var(--puck-color-red-04);
+  border-radius: 6px;
+  color: var(--puck-color-red-04);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 8px 12px;
+}
+
+.puck-ai-settings-clear-chat:hover:not(:disabled) {
+  background: var(--puck-color-grey-12);
+}
+
+.puck-ai-settings-clear-chat:focus-visible {
+  outline: 2px solid var(--puck-color-azure-04);
+  outline-offset: 2px;
+}
+
+.puck-ai-settings-clear-chat:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
