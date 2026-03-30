@@ -12,6 +12,7 @@ const config: Options = {
     "react",
     "react-dom",
     "@puckeditor/core",
+    "pika-editor-core",
     "@dnd-kit/react",
     "@dnd-kit/dom",
     "@dnd-kit/abstract",

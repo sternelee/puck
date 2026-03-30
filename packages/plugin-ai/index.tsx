@@ -54,6 +54,9 @@ import { ulid } from "ulid";
 import html2canvas from "html2canvas-pro";
 import "./styles.css";
 
+/** Module-scoped hook — must not call createUsePuck() inside Chat (invalid hook + context). */
+const usePuck = createUsePuck();
+
 // ============================================================
 // Image attachment helpers
 // ============================================================
@@ -1565,149 +1568,161 @@ function SettingsPanel({
           <div className="puck-ai-settings-section-title">Model settings</div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-vertex-model"
-            >
-              Model
-              <span className="puck-ai-settings-hint">
-                Auto retries across models if the current region lacks support
-              </span>
-            </label>
-            <select
-              id="puck-ai-vertex-model"
-              className="puck-ai-settings-select"
-              value={settings.vertexModel}
-              onChange={(e) =>
-                onChange({ vertexModel: e.target.value as VertexModel })
-              }
-            >
-              <option value="auto">Auto (recommended)</option>
-              <option value="gemini-3.1-pro-preview">
-                Gemini 3.1 Pro (preview)
-              </option>
-              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-            </select>
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-vertex-model"
+              >
+                Model
+              </label>
+              <select
+                id="puck-ai-vertex-model"
+                className="puck-ai-settings-select"
+                value={settings.vertexModel}
+                onChange={(e) =>
+                  onChange({ vertexModel: e.target.value as VertexModel })
+                }
+              >
+                <option value="auto">Auto (recommended)</option>
+                <option value="gemini-3.1-pro-preview">
+                  Gemini 3.1 Pro (preview)
+                </option>
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+              </select>
+            </div>
+            <p className="puck-ai-settings-hint">
+              Auto retries across models if the current region lacks support
+            </p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-thinking-level"
-            >
-              Thinking level
-              <span className="puck-ai-settings-hint">
-                Extended reasoning budget
-              </span>
-            </label>
-            <select
-              id="puck-ai-thinking-level"
-              className="puck-ai-settings-select"
-              value={settings.thinkingLevel}
-              onChange={(e) =>
-                onChange({ thinkingLevel: e.target.value as ThinkingLevel })
-              }
-            >
-              <option value="none">Off</option>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-thinking-level"
+              >
+                Thinking level
+              </label>
+              <select
+                id="puck-ai-thinking-level"
+                className="puck-ai-settings-select"
+                value={settings.thinkingLevel}
+                onChange={(e) =>
+                  onChange({ thinkingLevel: e.target.value as ThinkingLevel })
+                }
+              >
+                <option value="none">Off</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
+            <p className="puck-ai-settings-hint">Extended reasoning budget</p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-url-context"
-            >
-              URL context
-              <span className="puck-ai-settings-hint">
-                Fetch linked URLs during generation
-              </span>
-            </label>
-            <Toggle
-              id="puck-ai-url-context"
-              checked={settings.urlContext}
-              onChange={(v) => onChange({ urlContext: v })}
-            />
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-url-context"
+              >
+                URL context
+              </label>
+              <Toggle
+                id="puck-ai-url-context"
+                checked={settings.urlContext}
+                onChange={(v) => onChange({ urlContext: v })}
+              />
+            </div>
+            <p className="puck-ai-settings-hint">
+              Fetch linked URLs during generation
+            </p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-browser-capture"
-            >
-              Browser capture
-              <span className="puck-ai-settings-hint">
-                Run server-side browser migration (screenshot + DOM bundle) when
-                a migration URL is in the prompt. Turn off to use URL context
-                only without Worker/Puppeteer.
-              </span>
-            </label>
-            <Toggle
-              id="puck-ai-browser-capture"
-              checked={settings.browserCapture}
-              onChange={(v) =>
-                onChange({
-                  browserCapture: v,
-                  ...(v ? {} : { pageMigrationIr: false }),
-                })
-              }
-            />
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-browser-capture"
+              >
+                Browser capture
+              </label>
+              <Toggle
+                id="puck-ai-browser-capture"
+                checked={settings.browserCapture}
+                onChange={(v) =>
+                  onChange({
+                    browserCapture: v,
+                    ...(v ? {} : { pageMigrationIr: false }),
+                  })
+                }
+              />
+            </div>
+            <p className="puck-ai-settings-hint">
+              Run server-side browser migration (screenshot + DOM bundle) when a
+              migration URL is in the prompt. Turn off to use URL context only
+              without Worker/Puppeteer.
+            </p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-page-migration-ir"
-            >
-              Page migration IR
-              <span className="puck-ai-settings-hint">
-                Full DOM bundle + structured plan when a source URL is captured
-                (slower; screenshot-only when off). Requires Browser capture.
-              </span>
-            </label>
-            <Toggle
-              id="puck-ai-page-migration-ir"
-              disabled={!settings.browserCapture}
-              checked={settings.pageMigrationIr}
-              onChange={(v) => onChange({ pageMigrationIr: v })}
-            />
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-page-migration-ir"
+              >
+                Page migration IR
+              </label>
+              <Toggle
+                id="puck-ai-page-migration-ir"
+                disabled={!settings.browserCapture}
+                checked={settings.pageMigrationIr}
+                onChange={(v) => onChange({ pageMigrationIr: v })}
+              />
+            </div>
+            <p className="puck-ai-settings-hint">
+              Full DOM bundle + structured plan when a source URL is captured
+              (slower; screenshot-only when off). Requires Browser capture.
+            </p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-google-search"
-            >
-              Google Search
-              <span className="puck-ai-settings-hint">
-                Ground responses with live search
-              </span>
-            </label>
-            <Toggle
-              id="puck-ai-google-search"
-              checked={settings.googleSearch}
-              onChange={(v) => onChange({ googleSearch: v })}
-            />
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-google-search"
+              >
+                Google Search
+              </label>
+              <Toggle
+                id="puck-ai-google-search"
+                checked={settings.googleSearch}
+                onChange={(v) => onChange({ googleSearch: v })}
+              />
+            </div>
+            <p className="puck-ai-settings-hint">
+              Ground responses with live search
+            </p>
           </div>
 
           <div className="puck-ai-settings-row">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-enterprise-search"
-            >
-              Enterprise web search
-              <span className="puck-ai-settings-hint">
-                Advanced grounding via Vertex AI
-              </span>
-            </label>
-            <Toggle
-              id="puck-ai-enterprise-search"
-              checked={settings.enterpriseWebSearch}
-              onChange={(v) => onChange({ enterpriseWebSearch: v })}
-            />
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-enterprise-search"
+              >
+                Enterprise web search
+              </label>
+              <Toggle
+                id="puck-ai-enterprise-search"
+                checked={settings.enterpriseWebSearch}
+                onChange={(v) => onChange({ enterpriseWebSearch: v })}
+              />
+            </div>
+            <p className="puck-ai-settings-hint">
+              Advanced grounding via Vertex AI
+            </p>
           </div>
         </div>
 
@@ -1716,9 +1731,9 @@ function SettingsPanel({
             Figma integration
           </div>
 
-          <div className="puck-ai-settings-row puck-ai-settings-row--column">
+          <div className="puck-ai-settings-row puck-ai-settings-row--stack">
             <label
-              className="puck-ai-settings-label"
+              className="puck-ai-settings-label puck-ai-settings-label--block"
               htmlFor="puck-ai-figma-token"
             >
               Personal access token
@@ -1751,36 +1766,38 @@ function SettingsPanel({
             >
               Get your Figma access token →
             </a>
-            <span className="puck-ai-settings-hint" style={{ marginTop: 4 }}>
+            <p className="puck-ai-settings-hint">
               Paste a Figma URL in chat to generate from your design. Token
               overrides server config.
-            </span>
+            </p>
           </div>
         </div>
 
         <div className="puck-ai-settings-section">
           <div className="puck-ai-settings-section-title">Chat</div>
-          <div className="puck-ai-settings-row puck-ai-settings-row--column">
-            <label
-              className="puck-ai-settings-label"
-              htmlFor="puck-ai-clear-chat"
-            >
-              Clear chat history
-              <span className="puck-ai-settings-hint">
-                Remove all messages and reset the conversation context for this
-                session.
-              </span>
-            </label>
-            <button
-              id="puck-ai-clear-chat"
-              type="button"
-              className="puck-ai-settings-clear-chat"
-              disabled={!hasChatMessages}
-              onClick={onClearChatHistory}
-            >
-              <Trash2 size={14} aria-hidden />
-              Clear messages
-            </button>
+          <div className="puck-ai-settings-row">
+            <div className="puck-ai-settings-row-head">
+              <label
+                className="puck-ai-settings-label"
+                htmlFor="puck-ai-clear-chat"
+              >
+                Clear chat history
+              </label>
+              <button
+                id="puck-ai-clear-chat"
+                type="button"
+                className="puck-ai-settings-clear-chat"
+                disabled={!hasChatMessages}
+                onClick={onClearChatHistory}
+              >
+                <Trash2 size={14} aria-hidden />
+                Clear messages
+              </button>
+            </div>
+            <p className="puck-ai-settings-hint">
+              Remove all messages and reset the conversation context for this
+              session.
+            </p>
           </div>
         </div>
       </div>
@@ -1803,9 +1820,8 @@ export function Chat({
   prepareRequest?: AiPluginProps["prepareRequest"];
   settings?: AiPluginProps["settings"];
 }) {
-  const usePuck = createUsePuck();
   const { examplePrompts } = chat ?? {};
-  const puckDispatch = (usePuck as any)((s: any) => s.dispatch);
+  const puckDispatch = usePuck((s: any) => s.dispatch);
   const getPuck = useGetPuck();
   const localChatId = useRef("");
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
