@@ -275,8 +275,15 @@ export type RequestOptions = {
 
 export type ThinkingLevel = "none" | "low" | "medium" | "high";
 
+export type VertexModel =
+  | "auto"
+  | "gemini-3.1-pro-preview"
+  | "gemini-2.5-pro"
+  | "gemini-2.5-flash";
+
 export type AiSettings = {
   thinkingLevel: ThinkingLevel;
+  vertexModel: VertexModel;
   urlContext: boolean;
   googleSearch: boolean;
   enterpriseWebSearch: boolean;
@@ -297,6 +304,7 @@ export type AiSettings = {
 
 const DEFAULT_AI_SETTINGS: AiSettings = {
   thinkingLevel: "none",
+  vertexModel: "auto",
   urlContext: false,
   googleSearch: false,
   enterpriseWebSearch: false,
@@ -1559,6 +1567,33 @@ function SettingsPanel({
           <div className="puck-ai-settings-row">
             <label
               className="puck-ai-settings-label"
+              htmlFor="puck-ai-vertex-model"
+            >
+              Model
+              <span className="puck-ai-settings-hint">
+                Auto retries across models if the current region lacks support
+              </span>
+            </label>
+            <select
+              id="puck-ai-vertex-model"
+              className="puck-ai-settings-select"
+              value={settings.vertexModel}
+              onChange={(e) =>
+                onChange({ vertexModel: e.target.value as VertexModel })
+              }
+            >
+              <option value="auto">Auto (recommended)</option>
+              <option value="gemini-3.1-pro-preview">
+                Gemini 3.1 Pro (preview)
+              </option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+              <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            </select>
+          </div>
+
+          <div className="puck-ai-settings-row">
+            <label
+              className="puck-ai-settings-label"
               htmlFor="puck-ai-thinking-level"
             >
               Thinking level
@@ -1605,8 +1640,9 @@ function SettingsPanel({
             >
               Browser capture
               <span className="puck-ai-settings-hint">
-                Run server-side browser migration (screenshot + DOM bundle) when a migration
-                URL is in the prompt. Turn off to use URL context only without Worker/Puppeteer.
+                Run server-side browser migration (screenshot + DOM bundle) when
+                a migration URL is in the prompt. Turn off to use URL context
+                only without Worker/Puppeteer.
               </span>
             </label>
             <Toggle
@@ -1901,6 +1937,8 @@ export function Chat({
         const geminiConfig: Record<string, unknown> = {};
         if (currentSettings.thinkingLevel !== "none")
           geminiConfig.thinkingLevel = currentSettings.thinkingLevel;
+        if (currentSettings.vertexModel !== "auto")
+          geminiConfig.vertexModel = currentSettings.vertexModel;
         if (currentSettings.urlContext) geminiConfig.urlContext = true;
         if (currentSettings.browserCapture) {
           geminiConfig.browserCapture = true;
