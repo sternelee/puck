@@ -1789,12 +1789,6 @@ function SettingsPanel({
 }
 
 // ============================================================
-// usePuck store hook (singleton per plugin instance)
-// ============================================================
-
-const usePuck = createUsePuck();
-
-// ============================================================
 // Main Chat component
 // ============================================================
 
@@ -1809,6 +1803,7 @@ export function Chat({
   prepareRequest?: AiPluginProps["prepareRequest"];
   settings?: AiPluginProps["settings"];
 }) {
+  const usePuck = createUsePuck();
   const { examplePrompts } = chat ?? {};
   const puckDispatch = (usePuck as any)((s: any) => s.dispatch);
   const getPuck = useGetPuck();
