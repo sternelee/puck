@@ -405,6 +405,11 @@ const prefixedUlid = (prefix = "") => `${prefix ? `${prefix}_` : ""}${ulid()}`;
 
 const q = qler();
 
+/** Updates deferred because the node did not exist yet (wrong stream order or insert not indexed). */
+let deferredUpdates: UpdateOperation[] = [];
+
+const MAX_DEFERRED_UPDATES = 400;
+
 // ============================================================
 // dispatchOp - sophisticated version that uses state lookups
 // ============================================================
@@ -414,6 +419,7 @@ const getSelectorForId = (state: any, id: string) => {
   if (!node) return undefined;
   const zoneCompound = `${node.parentId}:${node.zone}`;
   const index = state.indexes.zones[zoneCompound]?.contentIds?.indexOf(id);
+  if (index === undefined || index < 0) return undefined;
   return { zone: zoneCompound, index };
 };
 
@@ -454,26 +460,77 @@ const applyArrayDefaults = (oldProps: any, newProps: any, fields: any) => {
   return updatedProps;
 };
 
+type DispatchCtx = {
+  getState: () => any;
+  dispatchAction: (action: any) => void;
+  config: Config;
+};
+
+function flushDeferredUpdates(ctx: DispatchCtx) {
+  if (deferredUpdates.length === 0) return;
+  let progress = true;
+  let rounds = 0;
+  while (progress && rounds < 80) {
+    rounds += 1;
+    progress = false;
+    const remaining: UpdateOperation[] = [];
+    for (const op of deferredUpdates) {
+      const state = ctx.getState();
+      const selector = getSelectorForId(state, op.id);
+      const existing = getItemById(state, op.id);
+      if (
+        selector &&
+        existing &&
+        typeof selector.index === "number" &&
+        selector.index >= 0
+      ) {
+        const newData = {
+          ...existing,
+          props: applyArrayDefaults(
+            existing.props,
+            op.props,
+            ctx.config.components[existing.type]?.fields ?? {}
+          ),
+        };
+        ctx.dispatchAction({
+          type: "replace",
+          destinationIndex: selector.index,
+          destinationZone: selector.zone,
+          data: newData,
+          recordHistory: false,
+        });
+        progress = true;
+      } else {
+        remaining.push(op);
+      }
+    }
+    deferredUpdates = remaining;
+    if (remaining.length === 0) break;
+  }
+}
+
 /**
  * After `insert`, Puck state exposed by `getState()` may not yet include the new node in the
  * same synchronous turn (React batching / store timing). Retry before merging AI props via `replace`.
  */
 const scheduleReplacePropsAfterAddInsert = (
   operation: AddOperation,
-  {
-    getState,
-    dispatchAction,
-    config,
-  }: {
-    getState: () => any;
-    dispatchAction: (action: any) => void;
-    config: Config;
-  }
+  ctx: DispatchCtx,
+  onInserted?: () => void
 ) => {
-  const maxAttempts = 8;
+  const { getState, dispatchAction, config } = ctx;
+  /** Enough tries for slow frames + nested inserts; rAF aligns with React commit. */
+  const maxAttempts = 24;
   const tryApply = (attempt: number) => {
-    const existing = getItemById(getState(), operation.id);
+    const state = getState();
+    const existing = getItemById(state, operation.id);
     if (existing) {
+      const sel = getSelectorForId(state, operation.id);
+      const useSel =
+        sel &&
+        typeof sel.index === "number" &&
+        sel.index >= 0 &&
+        sel.zone;
       const newData = {
         ...existing,
         props: applyArrayDefaults(
@@ -484,53 +541,59 @@ const scheduleReplacePropsAfterAddInsert = (
       };
       dispatchAction({
         type: "replace",
-        destinationIndex: operation.index,
-        destinationZone: operation.zone,
+        destinationIndex: useSel ? sel.index : operation.index,
+        destinationZone: useSel ? sel.zone : operation.zone,
         data: newData,
         recordHistory: false,
       });
+      onInserted?.();
       return;
     }
     if (attempt >= maxAttempts) {
       const zoneOk = Boolean(getState()?.indexes?.zones?.[operation.zone]);
-      console.error(
-        "Puck AI: could not find inserted item after add.",
-        zoneOk
-          ? "State may not have synced yet."
-          : `Target zone may be invalid or not yet in the tree: ${operation.zone}`,
-        operation
-      );
+      if (deferredUpdates.length < MAX_DEFERRED_UPDATES) {
+        deferredUpdates.push({
+          op: "update",
+          id: operation.id,
+          props: operation.props,
+        });
+      } else {
+        console.warn(
+          "Puck AI: deferred update queue full; add props may be lost.",
+          operation
+        );
+      }
+      if (!zoneOk) {
+        console.warn(
+          "Puck AI: zone not in tree after add (check model zone string).",
+          operation.zone,
+          operation
+        );
+      }
+      flushDeferredUpdates(ctx);
       return;
     }
-    const delay =
-      attempt === 0
-        ? 0
-        : attempt === 1
-        ? 0
-        : attempt === 2
-        ? 10
-        : attempt === 3
-        ? 50
-        : attempt === 4
-        ? 100
-        : 200;
-    setTimeout(() => tryApply(attempt + 1), delay);
+    const next = () => tryApply(attempt + 1);
+    if (attempt < 6) {
+      requestAnimationFrame(() => requestAnimationFrame(next));
+      return;
+    }
+    const delayTable = [0, 0, 16, 32, 50, 100, 150, 200, 300, 400, 500, 650, 800, 1000];
+    const delay = delayTable[attempt - 6] ?? 1000;
+    setTimeout(next, delay);
   };
-  queueMicrotask(() => tryApply(0));
+  queueMicrotask(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => tryApply(0));
+    });
+  });
 };
 
 const dispatchOp = (
   operation: Operation,
-  {
-    getState,
-    dispatchAction,
-    config,
-  }: {
-    getState: () => any;
-    dispatchAction: (action: any) => void;
-    config: Config;
-  }
+  ctx: DispatchCtx
 ) => {
+  const { getState, dispatchAction, config } = ctx;
   const state = getState();
   try {
     if (operation.op === "add") {
@@ -543,19 +606,24 @@ const dispatchOp = (
           id: operation.id,
           recordHistory: false,
         });
-        scheduleReplacePropsAfterAddInsert(operation, {
-          getState,
-          dispatchAction,
-          config,
-        });
+        scheduleReplacePropsAfterAddInsert(operation, ctx, () =>
+          flushDeferredUpdates(ctx)
+        );
       }
     } else if (operation.op === "update") {
       const selector = getSelectorForId(state, operation.id);
       const existing = getItemById(state, operation.id);
       if (!selector || !existing) {
-        throw new Error(
-          `Tried to update an item that doesn't exist: ${operation.id}`
-        );
+        if (deferredUpdates.length >= MAX_DEFERRED_UPDATES) {
+          console.warn(
+            "Puck AI: deferred update queue full; dropping update for",
+            operation.id
+          );
+        } else {
+          deferredUpdates.push(operation);
+        }
+        flushDeferredUpdates(ctx);
+        return;
       }
       const newData = {
         ...existing,
@@ -629,6 +697,7 @@ const dispatchOp = (
         recordHistory: false,
       });
     } else if ((operation as Operation).op === "reset") {
+      deferredUpdates = [];
       const defaultRootProps = (config as any).root?.defaultProps ?? {};
       dispatchAction({
         type: "setData",
@@ -638,6 +707,7 @@ const dispatchOp = (
     } else {
       throw new Error(`Unknown operation: ${(operation as any).op}`);
     }
+    flushDeferredUpdates(ctx);
   } catch (e) {
     console.error("Error applying operation, skipping...", operation, e);
   }
@@ -1888,9 +1958,17 @@ export function Chat({
           const data = dataPart.data as Operation;
           q.queue(() => {
             const puck = getPuck() as any;
-            if (!puck) return;
+            if (!puck?.dispatch || !puck?.config) {
+              console.warn(
+                "Puck AI: getPuck() is not ready; skipping data-build-op.",
+                data
+              );
+              return;
+            }
+            // Match official @puckeditor/plugin-ai: read internal state on each getState()
+            // so queued ops always see the latest indexes (not a stale closure).
             dispatchOp(data, {
-              getState: () => puck.__private?.appState,
+              getState: () => (getPuck() as any)?.__private?.appState,
               dispatchAction: puck.dispatch,
               config: puck.config,
             });
@@ -2022,6 +2100,17 @@ export function Chat({
           state: puck.appState,
           recordHistory: true,
         });
+      }
+      if (puck?.dispatch && puck?.config) {
+        const ctx: DispatchCtx = {
+          getState: () => (getPuck() as any)?.__private?.appState,
+          dispatchAction: puck.dispatch,
+          config: puck.config,
+        };
+        flushDeferredUpdates(ctx);
+        for (const delay of [50, 200, 500]) {
+          setTimeout(() => flushDeferredUpdates(ctx), delay);
+        }
       }
     },
   } as any);
