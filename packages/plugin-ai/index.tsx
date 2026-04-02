@@ -278,9 +278,13 @@ export type RequestOptions = {
 
 export type ThinkingLevel = "none" | "low" | "medium" | "high";
 
+/**
+ * Vertex Gemini model selection. `auto` lets the server pick among supported models
+ * (e.g. gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash).
+ */
 export type VertexModel =
   | "auto"
-  | "gemini-3.1-pro-preview"
+  | "gemini-3-pro-preview"
   | "gemini-2.5-pro"
   | "gemini-2.5-flash";
 
@@ -318,6 +322,30 @@ const DEFAULT_AI_SETTINGS: AiSettings = {
 
 const AI_SETTINGS_STORAGE_KEY = "puck-ai-settings";
 
+const VERTEX_MODEL_IDS: VertexModel[] = [
+  "auto",
+  "gemini-3-pro-preview",
+  "gemini-2.5-pro",
+  "gemini-2.5-flash",
+];
+
+function normalizeStoredVertexModel(raw: unknown): VertexModel {
+  if (
+    typeof raw === "string" &&
+    (VERTEX_MODEL_IDS as string[]).includes(raw)
+  ) {
+    return raw as VertexModel;
+  }
+  const legacy: Record<string, VertexModel> = {
+    "gemini-3-flash-preview": "gemini-2.5-flash",
+    "gemini-3.1-pro-preview": "gemini-3-pro-preview",
+  };
+  if (typeof raw === "string" && raw in legacy) {
+    return legacy[raw];
+  }
+  return "auto";
+}
+
 function useAiSettings(
   storageKey = AI_SETTINGS_STORAGE_KEY
 ): [AiSettings, (update: Partial<AiSettings>) => void] {
@@ -325,7 +353,20 @@ function useAiSettings(
     try {
       if (typeof window !== "undefined") {
         const stored = localStorage.getItem(storageKey);
-        if (stored) return { ...DEFAULT_AI_SETTINGS, ...JSON.parse(stored) };
+        if (stored) {
+          const parsed = JSON.parse(stored) as Partial<AiSettings>;
+          const nextVm = normalizeStoredVertexModel(parsed.vertexModel);
+          if (parsed.vertexModel !== nextVm) {
+            parsed.vertexModel = nextVm;
+            try {
+              localStorage.setItem(
+                storageKey,
+                JSON.stringify({ ...DEFAULT_AI_SETTINGS, ...parsed })
+              );
+            } catch {}
+          }
+          return { ...DEFAULT_AI_SETTINGS, ...parsed };
+        }
       }
     } catch {}
     return { ...DEFAULT_AI_SETTINGS };
@@ -1654,15 +1695,16 @@ function SettingsPanel({
                 }
               >
                 <option value="auto">Auto (recommended)</option>
-                <option value="gemini-3.1-pro-preview">
-                  Gemini 3.1 Pro (preview)
+                <option value="gemini-3-pro-preview">
+                  Gemini 3 Pro (preview)
                 </option>
                 <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
               </select>
             </div>
             <p className="puck-ai-settings-hint">
-              Auto retries across models if the current region lacks support
+              Auto lets the backend choose among Vertex-supported models; or pick a
+              specific model
             </p>
           </div>
 
