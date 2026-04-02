@@ -279,13 +279,13 @@ export type RequestOptions = {
 export type ThinkingLevel = "none" | "low" | "medium" | "high";
 
 /**
- * Vertex Gemini model selection. `auto` lets the server pick among supported models
- * (e.g. gemini-3-pro-preview, gemini-2.5-pro, gemini-2.5-flash).
+ * Vertex Gemini model selection. `auto` lets the server pick among supported models.
  */
 export type VertexModel =
   | "auto"
-  | "gemini-3-pro-preview"
-  | "gemini-2.5-pro"
+  | "gemini-3-flash-preview"
+  | "gemini-3.1-pro-preview"
+  | "gemini-3.1-flash-lite-preview"
   | "gemini-2.5-flash";
 
 export type AiSettings = {
@@ -324,8 +324,9 @@ const AI_SETTINGS_STORAGE_KEY = "puck-ai-settings";
 
 const VERTEX_MODEL_IDS: VertexModel[] = [
   "auto",
-  "gemini-3-pro-preview",
-  "gemini-2.5-pro",
+  "gemini-3-flash-preview",
+  "gemini-3.1-pro-preview",
+  "gemini-3.1-flash-lite-preview",
   "gemini-2.5-flash",
 ];
 
@@ -337,8 +338,8 @@ function normalizeStoredVertexModel(raw: unknown): VertexModel {
     return raw as VertexModel;
   }
   const legacy: Record<string, VertexModel> = {
-    "gemini-3-flash-preview": "gemini-2.5-flash",
-    "gemini-3.1-pro-preview": "gemini-3-pro-preview",
+    "gemini-3-pro-preview": "gemini-3.1-pro-preview",
+    "gemini-2.5-pro": "gemini-3.1-pro-preview",
   };
   if (typeof raw === "string" && raw in legacy) {
     return legacy[raw];
@@ -1695,10 +1696,15 @@ function SettingsPanel({
                 }
               >
                 <option value="auto">Auto (recommended)</option>
-                <option value="gemini-3-pro-preview">
-                  Gemini 3 Pro (preview)
+                <option value="gemini-3-flash-preview">
+                  Gemini 3 Flash (preview)
                 </option>
-                <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                <option value="gemini-3.1-pro-preview">
+                  Gemini 3.1 Pro (preview)
+                </option>
+                <option value="gemini-3.1-flash-lite-preview">
+                  Gemini 3.1 Flash Lite (preview)
+                </option>
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
               </select>
             </div>
