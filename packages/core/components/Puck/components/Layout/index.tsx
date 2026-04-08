@@ -67,8 +67,11 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
     dnd,
     initialHistory: _initialHistory,
     plugins,
-    height,
+    height: heightProp,
   } = usePropsContext();
+
+  /** Fills parent when `height="100%"` (e.g. below app chrome); else full viewport. */
+  const height = heightProp ?? "100dvh";
 
   const iframe: IframeConfig = useMemo(
     () => ({
@@ -266,14 +269,15 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
         hidePlugins: hasLegacySideBarPlugin,
       })}`}
       id={instanceId}
-      style={{ height }}
+      style={{ height, minHeight: 0 }}
     >
       <DragDropContext disableAutoScroll={dnd?.disableAutoScroll}>
-        <CustomPuck>
-          {children || (
-            <FrameProvider>
-              <div
-                className={getLayoutClassName({
+        <div className={getClassName("main")}>
+          <CustomPuck>
+            {children || (
+              <FrameProvider>
+                <div
+                  className={getLayoutClassName({
                   leftSideBarVisible,
                   mounted,
                   rightSideBarVisible:
@@ -283,7 +287,7 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
                   mobilePanelHeightMinContent:
                     mobilePanelHeightMode === "min-content",
                 })}
-                style={{ height }}
+                style={{ height, minHeight: 0 }}
               >
                 <div
                   className={getLayoutClassName("inner")}
@@ -350,9 +354,10 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
                   )}
                 </div>
               </div>
-            </FrameProvider>
-          )}
-        </CustomPuck>
+              </FrameProvider>
+            )}
+          </CustomPuck>
+        </div>
       </DragDropContext>
       <div id="puck-portal-root" className={getClassName("portal")} />
     </div>

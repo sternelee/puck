@@ -1,6 +1,6 @@
 {
   "name": "pika-editor-core",
-  "version": "0.21.4",
+  "version": "0.21.5",
   "description": "The open-source visual editor for React",
   "author": "sternelee <sternelee@gmail.com>",
   "repository": "puckeditor/puck",

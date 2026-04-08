@@ -18,7 +18,11 @@
 
 .Puck {
   --puck-space-px: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   font-family: var(--puck-font-family);
+  min-height: 0;
   overflow-x: hidden;
 }
 
@@ -33,8 +37,24 @@
   z-index: 2;
 }
 
+/* Fills .Puck below the portal root; keeps DnD subtree in a sized flex column. */
+.Puck-main {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Height comes from the `height` prop (default 100dvh via Layout) as inline style.
+ * Use 100% + min-height 0 so flex parents (app chrome + flex-1) constrain the editor
+ * instead of always forcing one viewport — 100dvh alone breaks embedded layouts.
+ */
 .PuckLayout {
-  height: 100dvh;
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0;
 }
 
 .PuckLayout-inner {
