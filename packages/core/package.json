@@ -1,6 +1,6 @@
 {
   "name": "pika-editor-core",
-  "version": "0.21.5",
+  "version": "0.21.6",
   "description": "The open-source visual editor for React",
   "author": "sternelee <sternelee@gmail.com>",
   "repository": "puckeditor/puck",
@@ -108,6 +108,7 @@
     "@dnd-kit/helpers": "0.1.18",
     "@dnd-kit/react": "0.1.18",
     "@radix-ui/react-popover": "^1.1.15",
+    "@tanstack/react-virtual": "^3.13.9",
     "@tiptap/core": "^3.11.1",
     "@tiptap/extension-blockquote": "^3.11.1",
     "@tiptap/extension-bold": "^3.11.1",

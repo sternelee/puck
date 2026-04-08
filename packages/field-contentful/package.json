@@ -1,6 +1,6 @@
 {
   "name": "@puckeditor/field-contentful",
-  "version": "0.21.1",
+  "version": "0.21.2",
   "author": "Chris Villa <chris@puckeditor.com>",
   "repository": "puckeditor/puck",
   "bugs": "https://github.com/puckeditor/puck/issues",
@@ -21,7 +21,7 @@
     "dist"
   ],
   "devDependencies": {
-    "pika-editor-core": "^0.21.1",
+    "pika-editor-core": "workspace:*",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
     "contentful": "^10.8.6",

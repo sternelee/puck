@@ -5,7 +5,7 @@ import {
   rootZone,
 } from "../../lib/root-droppable-id";
 import { setupZone } from "../../lib/data/setup-zone";
-import { ComponentData, Config, Data, Metadata, UserGenerics } from "../../types";
+import { Config, Data, Metadata, UserGenerics } from "../../types";
 import { useSlots } from "../../lib/use-slots";
 import { SlotRenderPure } from "../SlotRender/server";
 import { useRichtextProps } from "../RichTextEditor/lib/use-richtext-props.server";
@@ -19,17 +19,19 @@ type DropZoneRenderProps = {
   metadata?: Metadata;
 };
 
-const DropZoneItem = ({
-  config,
+type DropZoneRenderItemProps = {
+  item: Data["content"][number];
+  data: Data;
+  config: Config;
+  metadata: Metadata;
+};
+
+function DropZoneRenderItem({
   item,
   data,
+  config,
   metadata,
-}: {
-  config: Config;
-  item: ComponentData;
-  data: Data;
-  metadata: Metadata;
-}) => {
+}: DropZoneRenderItemProps) {
   const Component = config.components[item.type];
 
   const props = {
@@ -51,17 +53,17 @@ const DropZoneItem = ({
   };
 
   const renderItem = { ...item, props };
-
   const propsWithSlots = useSlots(config, renderItem, (slotProps) => (
     <SlotRenderPure {...slotProps} config={config} metadata={metadata} />
   ));
-
   const richtextProps = useRichtextProps(Component?.fields, propsWithSlots);
 
-  if (!Component) return null;
+  if (!Component) {
+    return null;
+  }
 
   return <Component.render {...propsWithSlots} {...richtextProps} />;
-};
+}
 
 export function DropZoneRender({
   zone,
@@ -84,15 +86,17 @@ export function DropZoneRender({
 
   return (
     <>
-      {content.map((item) => (
-        <DropZoneItem
-          key={item.props.id}
-          config={config}
-          item={item}
-          data={data}
-          metadata={metadata}
-        />
-      ))}
+      {content.map((item) => {
+        return (
+          <DropZoneRenderItem
+            key={item.props.id}
+            item={item}
+            data={data}
+            config={config}
+            metadata={metadata}
+          />
+        );
+      })}
     </>
   );
 }

@@ -1,5 +1,6 @@
 import {
   CSSProperties,
+  Ref,
   forwardRef,
   memo,
   useCallback,
@@ -10,7 +11,7 @@ import {
 } from "react";
 import { DraggableComponent } from "../DraggableComponent";
 import { setupZone } from "../../lib/data/setup-zone";
-import { rootDroppableId } from "../../lib/root-droppable-id";
+import { rootAreaId, rootDroppableId } from "../../lib/root-droppable-id";
 import { getClassNameFactory } from "../../lib";
 import styles from "./styles.module.css";
 import {
@@ -25,7 +26,6 @@ import {
   ComponentData,
   Config,
   DragAxis,
-  Fields,
   Metadata,
   Overrides,
   PuckContext,
@@ -53,6 +53,7 @@ import { getRichTextTransform } from "../../lib/field-transforms/default-transfo
 import { FieldTransforms } from "../../types/API/FieldTransforms";
 import { useRichtextProps } from "../RichTextEditor/lib/use-richtext-props";
 import { MemoizeComponent } from "../MemoizeComponent";
+import { VirtualizedDropZone } from "./VirtualizedDropZone";
 
 const getClassName = getClassNameFactory("DropZone", styles);
 
@@ -100,6 +101,7 @@ const DropZoneChild = ({
   dragAxis,
   collisionAxis,
   inDroppableZone,
+  itemRef,
 }: {
   zoneCompound: string;
   componentId: string;
@@ -107,6 +109,7 @@ const DropZoneChild = ({
   dragAxis: DragAxis;
   collisionAxis?: DragAxis;
   inDroppableZone: boolean;
+  itemRef?: Ref<HTMLElement>;
 }) => {
   const metadata = useAppStore((s) => s.metadata);
 
@@ -252,6 +255,7 @@ const DropZoneChild = ({
       userDragAxis={collisionAxis}
       insertData={"insertData" in item ? item.insertData : undefined}
       inDroppableZone={inDroppableZone}
+      itemRef={itemRef}
     >
       {(dragRef) => {
         if (componentConfig?.inline && !isInserting) {
@@ -489,7 +493,13 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
       [dropRef]
     );
 
+    const _experimentalVirtualization = useAppStore(
+      (s) => s._experimentalVirtualization
+    );
+
     const El = as ?? "div";
+    const isRootAreaZone = (areaId ?? rootAreaId) === rootAreaId && depth === 0;
+    const shouldVirtualizeItems = _experimentalVirtualization && isRootAreaZone;
 
     return (
       <El
@@ -514,8 +524,25 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
           } as CSSProperties
         }
       >
-        {contentIdsWithPreview.map((componentId, i) => {
-          return (
+        {shouldVirtualizeItems ? (
+          <VirtualizedDropZone
+            contentIds={contentIdsWithPreview}
+            zoneCompound={zoneCompound}
+            renderItem={(props) => (
+              <DropZoneChildMemo
+                key={props.componentId}
+                zoneCompound={zoneCompound}
+                componentId={props.componentId}
+                dragAxis={dragAxis}
+                index={props.index}
+                collisionAxis={collisionAxis}
+                inDroppableZone={targetAccepted}
+                itemRef={props.measureRef}
+              />
+            )}
+          />
+        ) : (
+          contentIdsWithPreview.map((componentId, i) => (
             <DropZoneChildMemo
               key={componentId}
               zoneCompound={zoneCompound}
@@ -525,8 +552,8 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
               collisionAxis={collisionAxis}
               inDroppableZone={targetAccepted}
             />
-          );
-        })}
+          ))
+        )}
       </El>
     );
   }
