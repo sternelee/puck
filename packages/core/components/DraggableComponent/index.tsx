@@ -273,7 +273,10 @@ export const DraggableComponent = ({
 
   const [portalEl, setPortalEl] = useState<HTMLElement>();
 
-  useEffect(() => {
+  // useLayoutEffect: ref is set during commit before this runs; useEffect runs after paint
+  // and could leave portalEl undefined so createPortal falls back to the host document.body,
+  // while getBoundingClientRect() still uses iframe coordinates — misplacing the action bar.
+  useLayoutEffect(() => {
     setPortalEl(
       iframe.enabled
         ? ref.current?.ownerDocument.body
@@ -293,8 +296,9 @@ export const DraggableComponent = ({
 
     const targetIsFixed = (() => {
       let node: HTMLElement | null = el;
+      const root = el.ownerDocument.documentElement;
 
-      while (node && node !== document.documentElement) {
+      while (node && node !== root) {
         if (getComputedStyle(node).position === "fixed") {
           return true;
         }
