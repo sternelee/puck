@@ -49,10 +49,20 @@ import {
   Wrench,
   X,
 } from "lucide-react";
-import qler from "qler";
+import * as qlerModule from "qler";
 import { ulid } from "ulid";
 import html2canvas from "html2canvas-pro";
 import "./styles.css";
+
+type QlerInstance = {
+  queue: <T>(fn: () => Promise<T> | T, key?: string) => Promise<T>;
+  cancel: () => Promise<void>;
+  wait: () => Promise<void>;
+};
+
+const qlerFactory = ("default" in qlerModule
+  ? qlerModule.default
+  : qlerModule) as unknown as (concurrency?: number) => QlerInstance;
 
 /** Module-scoped hook — must not call createUsePuck() inside Chat (invalid hook + context). */
 const usePuck = createUsePuck();
@@ -331,10 +341,7 @@ const VERTEX_MODEL_IDS: VertexModel[] = [
 ];
 
 function normalizeStoredVertexModel(raw: unknown): VertexModel {
-  if (
-    typeof raw === "string" &&
-    (VERTEX_MODEL_IDS as string[]).includes(raw)
-  ) {
+  if (typeof raw === "string" && (VERTEX_MODEL_IDS as string[]).includes(raw)) {
     return raw as VertexModel;
   }
   const legacy: Record<string, VertexModel> = {
@@ -445,7 +452,7 @@ declare global {
 
 const prefixedUlid = (prefix = "") => `${prefix ? `${prefix}_` : ""}${ulid()}`;
 
-const q = qler();
+const q = qlerFactory();
 
 /** Updates deferred because the node did not exist yet (wrong stream order or insert not indexed). */
 let deferredUpdates: UpdateOperation[] = [];
@@ -569,10 +576,7 @@ const scheduleReplacePropsAfterAddInsert = (
     if (existing) {
       const sel = getSelectorForId(state, operation.id);
       const useSel =
-        sel &&
-        typeof sel.index === "number" &&
-        sel.index >= 0 &&
-        sel.zone;
+        sel && typeof sel.index === "number" && sel.index >= 0 && sel.zone;
       const newData = {
         ...existing,
         props: applyArrayDefaults(
@@ -620,7 +624,9 @@ const scheduleReplacePropsAfterAddInsert = (
       requestAnimationFrame(() => requestAnimationFrame(next));
       return;
     }
-    const delayTable = [0, 0, 16, 32, 50, 100, 150, 200, 300, 400, 500, 650, 800, 1000];
+    const delayTable = [
+      0, 0, 16, 32, 50, 100, 150, 200, 300, 400, 500, 650, 800, 1000,
+    ];
     const delay = delayTable[attempt - 6] ?? 1000;
     setTimeout(next, delay);
   };
@@ -631,10 +637,7 @@ const scheduleReplacePropsAfterAddInsert = (
   });
 };
 
-const dispatchOp = (
-  operation: Operation,
-  ctx: DispatchCtx
-) => {
+const dispatchOp = (operation: Operation, ctx: DispatchCtx) => {
   const { getState, dispatchAction, config } = ctx;
   const state = getState();
   try {
@@ -1709,8 +1712,8 @@ function SettingsPanel({
               </select>
             </div>
             <p className="puck-ai-settings-hint">
-              Auto lets the backend choose among Vertex-supported models; or pick a
-              specific model
+              Auto lets the backend choose among Vertex-supported models; or
+              pick a specific model
             </p>
           </div>
 

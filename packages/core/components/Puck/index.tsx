@@ -21,6 +21,7 @@ import type {
   Overrides,
   Permissions,
   Plugin,
+  PuckCommands,
   InitialHistory,
   UserGenerics,
   Config,
@@ -39,6 +40,7 @@ import { Outline } from "./components/Outline";
 import { defaultViewports } from "../ViewportControls/default-viewports";
 import { Viewports } from "../../types";
 import { useLoadedOverrides } from "../../lib/use-loaded-overrides";
+import { loadCommands } from "../../lib/load-commands";
 import { useRegisterHistorySlice } from "../../store/slices/history";
 import { useRegisterPermissionsSlice } from "../../store/slices/permissions";
 import {
@@ -67,6 +69,7 @@ type PuckProps<
   onAction?: OnAction<G["UserData"]>;
   permissions?: Partial<Permissions>;
   plugins?: Plugin<UserConfig>[];
+  commands?: Partial<PuckCommands<UserConfig>>;
   overrides?: Partial<Overrides<UserConfig>>;
   favoritesStorageKey?: string;
   fieldTransforms?: FieldTransforms<UserConfig>;
@@ -119,6 +122,7 @@ function PuckProvider<
     onChange,
     permissions = {},
     plugins,
+    commands,
     overrides,
     viewports = defaultViewports,
     iframe: _iframe,
@@ -254,6 +258,13 @@ function PuckProvider<
     };
   }, [fieldTransforms, plugins]);
 
+  const loadedCommands = useMemo(() => {
+    return loadCommands({
+      commands,
+      plugins,
+    });
+  }, [commands, plugins]);
+
   const instanceId = useSafeId();
 
   const generateAppStore = useCallback(
@@ -263,6 +274,7 @@ function PuckProvider<
         state,
         config,
         plugins: plugins || [],
+        commands: loadedCommands,
         overrides: loadedOverrides,
         viewports,
         iframe,
@@ -279,6 +291,7 @@ function PuckProvider<
       config,
       plugins,
       loadedOverrides,
+      loadedCommands,
       viewports,
       iframe,
       _experimentalFullScreenCanvas,

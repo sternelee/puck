@@ -1,0 +1,182 @@
+.QuickInsert {
+  display: flex;
+  flex-direction: column;
+  max-height: 90dvh;
+  min-height: 46px;
+}
+
+.QuickInsert-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 12px;
+  border-bottom: 1px solid var(--puck-color-grey-09);
+}
+
+.QuickInsert-summary {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.QuickInsert-searchRow {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--puck-color-grey-09);
+}
+
+.QuickInsert-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 6px;
+  background: var(--puck-color-white);
+}
+
+.QuickInsert-search:focus-within {
+  border-color: var(--puck-color-azure-07);
+  box-shadow: 0 0 0 1px var(--puck-color-azure-07);
+}
+
+.QuickInsert-searchLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.QuickInsert-searchIcon {
+  color: var(--puck-color-grey-05);
+  display: flex;
+}
+
+.QuickInsert-searchInput {
+  background: transparent;
+  border: 0;
+  color: var(--puck-color-black);
+  flex: 1;
+  font: inherit;
+  min-width: 0;
+  padding: 0;
+}
+
+.QuickInsert-searchInput:focus {
+  outline: 0;
+}
+
+.QuickInsert-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+.QuickInsert-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.QuickInsert-sectionTitle {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.QuickInsert-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  align-items: start;
+  gap: 6px;
+}
+
+.QuickInsert-item {
+  appearance: none;
+  background: var(--puck-color-white);
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 6px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.QuickInsert-item:focus-visible {
+  outline: 2px solid var(--puck-color-azure-05);
+  outline-offset: 2px;
+}
+
+.QuickInsert-item--isActive {
+  background-color: var(--puck-color-azure-12);
+  border-color: var(--puck-color-azure-08);
+  box-shadow: 0 0 0 1px var(--puck-color-azure-08);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .QuickInsert-item:hover {
+    background-color: var(--puck-color-azure-12);
+    border-color: var(--puck-color-azure-08);
+  }
+}
+
+.QuickInsert-itemTitle {
+  color: var(--puck-color-black);
+  font-size: var(--puck-font-size-xxs);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.QuickInsert-itemMeta {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.QuickInsert-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px;
+  text-align: center;
+}
+
+.QuickInsert-emptyIcon {
+  color: var(--puck-color-grey-05);
+  display: flex;
+}
+
+.QuickInsert-emptyTitle {
+  color: var(--puck-color-black);
+  font-size: var(--puck-font-size-xxs);
+  font-weight: 600;
+}
+
+.QuickInsert-emptyText {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  line-height: 1.5;
+  max-width: 280px;
+}

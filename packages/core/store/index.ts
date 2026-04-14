@@ -7,6 +7,7 @@ import {
   AppState,
   UiState,
   Plugin,
+  LoadedPuckCommands,
   UserGenerics,
   Field,
   ComponentConfig,
@@ -73,6 +74,7 @@ export type AppStore<
   ) => Promise<{ node: T; didChange: boolean }>;
   resolveAndCommitData: () => void;
   plugins: Plugin[];
+  commands: LoadedPuckCommands<UserConfig>;
   overrides: Partial<Overrides>;
   viewports: Viewports;
   zoomConfig: ZoomConfig;
@@ -116,6 +118,7 @@ export const createAppStore = (initialAppStore?: Partial<AppStore>) =>
       config: { components: {} },
       componentState: {},
       plugins: [],
+      commands: { component: [] },
       overrides: {},
       viewports: defaultViewports,
       zoomConfig: {

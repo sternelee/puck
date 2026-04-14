@@ -9,6 +9,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/react";
 import { ComponentData } from "../../types";
 import { useAppStore } from "../../store";
 import { populateIds } from "../../lib/data/populate-ids";
+import { BlockPreview } from "../BlockPreview";
 
 const getClassName = getClassNameFactory("Drawer", styles);
 const getClassNameItem = getClassNameFactory("DrawerItem", styles);
@@ -19,12 +20,14 @@ export const DrawerItemInner = ({
   children,
   name,
   label,
+  data,
   dragRef,
   isDragDisabled,
 }: {
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
   name: string;
   label?: string;
+  data?: DrawerItemData;
   dragRef?: Ref<HTMLDivElement>;
   isDragDisabled?: boolean;
 }) => {
@@ -32,9 +35,11 @@ export const DrawerItemInner = ({
     () =>
       children ||
       (({ children }: { children: ReactNode; name: string }) => (
-        <div className={getClassNameItem("default")}>{children}</div>
+        <BlockPreview label={label} name={name} previewData={data}>
+          <div className={getClassNameItem("default")}>{children}</div>
+        </BlockPreview>
       )),
-    [children]
+    [children, data, label, name]
   );
 
   return (
@@ -111,6 +116,7 @@ const DrawerItemDraggable = ({
       </div>
       <div className={getClassName("draggableFg")}>
         <DrawerItemInner
+          data={data}
           name={name}
           label={label}
           dragRef={ref}

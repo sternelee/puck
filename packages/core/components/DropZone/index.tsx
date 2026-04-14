@@ -1,5 +1,6 @@
 import {
   CSSProperties,
+  MouseEvent,
   Ref,
   forwardRef,
   memo,
@@ -8,6 +9,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { DraggableComponent } from "../DraggableComponent";
 import { setupZone } from "../../lib/data/setup-zone";
@@ -54,6 +56,9 @@ import { FieldTransforms } from "../../types/API/FieldTransforms";
 import { useRichtextProps } from "../RichTextEditor/lib/use-richtext-props";
 import { MemoizeComponent } from "../MemoizeComponent";
 import { VirtualizedDropZone } from "./VirtualizedDropZone";
+import { Button } from "../Button";
+import { focusBlocksSearch, getBlocksShortcutLabel } from "../../lib/blocks";
+import { QuickInsert } from "../QuickInsert";
 
 const getClassName = getClassNameFactory("DropZone", styles);
 
@@ -88,6 +93,88 @@ const InsertPreview = ({
   }
 
   return <DrawerItemInner name={label}>{override}</DrawerItemInner>;
+};
+
+const EmptyDropZoneState = ({
+  allow,
+  destinationZone,
+  disallow,
+  isRootZone,
+}: {
+  allow?: string[];
+  destinationZone: string;
+  disallow?: string[];
+  isRootZone: boolean;
+}) => {
+  const setUi = useAppStore((s) => s.setUi);
+  const shortcutLabel = useMemo(() => getBlocksShortcutLabel(), []);
+  const [isQuickInsertOpen, setIsQuickInsertOpen] = useState(false);
+
+  const handleOpenBlocks = useCallback(
+    (event: MouseEvent<HTMLDivElement | HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setIsQuickInsertOpen(true);
+    },
+    []
+  );
+
+  const handleOpenSidebarBlocks = useCallback(
+    (event: MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setUi({
+        leftSideBarVisible: true,
+        plugin: { current: "blocks" },
+      });
+      focusBlocksSearch();
+    },
+    [setUi]
+  );
+
+  return (
+    <>
+      <div
+        className={getClassName("placeholder")}
+        data-puck-dropzone-placeholder
+        onClick={handleOpenBlocks}
+      >
+        <div className={getClassName("placeholderTitle")}>
+          {isRootZone
+            ? "Start with your first block"
+            : "Add a block to this area"}
+        </div>
+        <div className={getClassName("placeholderText")}>
+          Click to insert a block here, or open the sidebar browser.
+        </div>
+        <div className={getClassName("placeholderActions")}>
+          <Button type="button" variant="secondary" onClick={handleOpenBlocks}>
+            Quick insert
+          </Button>
+          <button
+            className={getClassName("placeholderLink")}
+            onClick={handleOpenSidebarBlocks}
+            type="button"
+          >
+            Open blocks
+          </button>
+          <span className={getClassName("placeholderShortcut")}>
+            {shortcutLabel}
+          </span>
+        </div>
+      </div>
+      <QuickInsert
+        allow={allow}
+        destinationZone={destinationZone}
+        disallow={disallow}
+        isOpen={isQuickInsertOpen}
+        onClose={() => setIsQuickInsertOpen(false)}
+        title={isRootZone ? "Insert your first block" : "Insert block"}
+      />
+    </>
+  );
 };
 
 export const DropZoneEditPure = (props: DropZoneProps) => (
@@ -442,6 +529,11 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
       contentIds,
       zoneCompound
     );
+    const hasActiveDrag = useContextStore(
+      ZoneStoreContext,
+      (s) => !!s.draggedItem
+    );
+    const isEmpty = contentIdsWithPreview.length === 0;
 
     const isDropEnabled =
       isEnabled &&
@@ -504,6 +596,7 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
     return (
       <El
         className={`${getClassName({
+          isEmpty,
           isRootZone,
           hoveringOverArea,
           isEnabled,
@@ -524,6 +617,14 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
           } as CSSProperties
         }
       >
+        {isEmpty && !hasActiveDrag && (
+          <EmptyDropZoneState
+            allow={allow}
+            destinationZone={zoneCompound}
+            disallow={disallow}
+            isRootZone={isRootZone}
+          />
+        )}
         {shouldVirtualizeItems ? (
           <VirtualizedDropZone
             contentIds={contentIdsWithPreview}

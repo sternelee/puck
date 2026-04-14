@@ -1,0 +1,119 @@
+.PuckComponents {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.PuckComponents-search {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 6px;
+  background: var(--puck-color-white);
+}
+
+.PuckComponents-search:focus-within {
+  border-color: var(--puck-color-azure-07);
+  box-shadow: 0 0 0 1px var(--puck-color-azure-07);
+}
+
+.PuckComponents-searchLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.PuckComponents-searchIcon {
+  color: var(--puck-color-grey-05);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.PuckComponents-searchInput {
+  background: transparent;
+  border: 0;
+  color: var(--puck-color-black);
+  flex: 1;
+  font: inherit;
+  min-width: 0;
+  padding: 0;
+}
+
+.PuckComponents-searchInput:focus {
+  outline: 0;
+}
+
+.PuckComponents-searchInput::placeholder {
+  color: var(--puck-color-grey-05);
+}
+
+.PuckComponents-summary {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.PuckComponents-lists {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.PuckComponents-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 1px dashed var(--puck-color-grey-08);
+  border-radius: 6px;
+  background: var(--puck-color-grey-12);
+  text-align: center;
+}
+
+.PuckComponents-emptyIcon {
+  color: var(--puck-color-grey-05);
+  display: flex;
+}
+
+.PuckComponents-emptyTitle {
+  color: var(--puck-color-black);
+  font-size: var(--puck-font-size-xxs);
+  font-weight: 600;
+}
+
+.PuckComponents-emptyText {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  line-height: 1.5;
+  max-width: 240px;
+}
+
+.PuckComponents-emptyAction {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--puck-color-azure-04);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+  padding: 0;
+}
+
+.PuckComponents-emptyAction:focus-visible {
+  outline: 2px solid var(--puck-color-azure-05);
+  outline-offset: 2px;
+}

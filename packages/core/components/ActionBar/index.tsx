@@ -41,6 +41,7 @@ export const Action = ({
 }) => (
   <button
     type="button"
+    aria-label={label}
     className={getActionClassName({ active, disabled })}
     onClick={onClick}
     title={label}

@@ -19,12 +19,19 @@ import { Copy, CornerLeftUp, Sparkles, Star, Trash } from "lucide-react";
 import { useAppStore, useAppStoreApi } from "../../store";
 import { Loader } from "../Loader";
 import { ActionBar } from "../ActionBar";
+import { QuickInsert } from "../QuickInsert";
+import { ContextMenu } from "../ContextMenu";
 
 import { createPortal } from "react-dom";
 
 import { dropZoneContext, DropZoneProvider } from "../DropZone";
 import { createDynamicCollisionDetector } from "../../lib/dnd/collision/dynamic";
-import { ComponentData, DragAxis } from "../../types";
+import {
+  ComponentData,
+  DragAxis,
+  PuckInsertTarget,
+  PuckUiCommand,
+} from "../../types";
 import { UniqueIdentifier } from "@dnd-kit/abstract";
 import { getDeepScrollPosition } from "../../lib/get-deep-scroll-position";
 import { DropZoneContext, ZoneStoreContext } from "../DropZone/context";
@@ -42,6 +49,15 @@ import {
 } from "../../lib/favorites";
 import type { NodeHandle } from "../../store/slices/nodes";
 import { assignRefs } from "../../lib/assign-refs";
+import {
+  resolveInsertionTargetForComponentSlot,
+  resolveInsertionTargetForZone,
+} from "../../lib/insertion-targets";
+import {
+  filterCommandsBySurface,
+  groupCommands,
+  resolveComponentCommands,
+} from "../../lib/component-commands";
 
 const getClassName = getClassNameFactory("DraggableComponent", styles);
 
@@ -81,6 +97,78 @@ const DefaultOverlay = ({
   componentId: string;
   componentType: string;
 }) => <>{children}</>;
+
+const InsertBeforeIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+    <path
+      d="M3 3.5h10"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8 6v6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M5 9h6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const InsertAfterIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+    <path
+      d="M3 12.5h10"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M8 4v6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M5 7h6"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
+
+const InsertIntoIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+    <rect
+      x="2.75"
+      y="2.75"
+      width="10.5"
+      height="10.5"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="1.5"
+    />
+    <path
+      d="M8 5.25v5.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+    <path
+      d="M5.25 8h5.5"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+);
 
 export type ComponentDndData = {
   areaId?: string;
@@ -134,9 +222,13 @@ export const DraggableComponent = ({
   const _experimentalFullScreenCanvas = useAppStore(
     (s) => s._experimentalFullScreenCanvas
   );
+  const config = useAppStore((s) => s.config);
+  const commandResolvers = useAppStore((s) => s.commands.component);
   const overrides = useAppStore((s) => s.overrides);
   const dispatch = useAppStore((s) => s.dispatch);
   const iframe = useAppStore((s) => s.iframe);
+  const selectedItem = useAppStore((s) => s.selectedItem || null);
+  const setUi = useAppStore((s) => s.setUi);
   const { favoritesStorageKey, headerPath } = usePropsContext();
   const hasAiPlugin = useAppStore((s) =>
     s.plugins.some((p) => p.name === "ai")
@@ -462,6 +554,25 @@ export const DraggableComponent = ({
   );
 
   const appStore = useAppStoreApi();
+  const [quickInsertTarget, setQuickInsertTarget] = useState<{
+    target: PuckInsertTarget;
+    title: string;
+  } | null>(null);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const openQuickInsert = useCallback(
+    ({ target, title }: { target: PuckInsertTarget; title: string }) => {
+      setContextMenuPosition(null);
+      setQuickInsertTarget({
+        target,
+        title,
+      });
+    },
+    []
+  );
 
   const onSelectParent = useCallback(() => {
     const { nodes, zones } = appStore.getState().state.indexes;
@@ -506,6 +617,39 @@ export const DraggableComponent = ({
     });
   }, [index, zoneCompound]);
 
+  const beforeTarget = useMemo(
+    () =>
+      resolveInsertionTargetForZone({
+        config,
+        destinationIndex: index,
+        state: appStore.getState().state,
+        zoneCompound,
+      }),
+    [appStore, config, index, zoneCompound]
+  );
+
+  const afterTarget = useMemo(
+    () =>
+      resolveInsertionTargetForZone({
+        config,
+        destinationIndex: index + 1,
+        state: appStore.getState().state,
+        zoneCompound,
+      }),
+    [appStore, config, index, zoneCompound]
+  );
+
+  const intoTarget = useMemo(
+    () =>
+      resolveInsertionTargetForComponentSlot({
+        componentId: id,
+        componentType,
+        config,
+        state: appStore.getState().state,
+      }),
+    [appStore, componentType, config, id]
+  );
+
   const onAiEdit = useCallback(() => {
     // Select the component and navigate to the AI panel
     dispatch({
@@ -522,11 +666,13 @@ export const DraggableComponent = ({
     requestAnimationFrame(() => {
       const puckAi = (window as any).__PUCK_AI as
         | {
-            setTargetComponent?: (t: {
-              id: string;
-              type: string;
-              label?: string;
-            } | null) => void;
+            setTargetComponent?: (
+              t: {
+                id: string;
+                type: string;
+                label?: string;
+              } | null
+            ) => void;
           }
         | undefined;
       puckAi?.setTargetComponent?.({
@@ -583,6 +729,197 @@ export const DraggableComponent = ({
     zoneCompound,
   ]);
 
+  const intoLabel =
+    intoTarget?.slotFieldName &&
+    !["children", "content", "items"].includes(intoTarget.slotFieldName)
+      ? `Insert into ${intoTarget.slotFieldName}`
+      : "Insert into";
+
+  const defaultCommands = useMemo<PuckUiCommand[]>(() => {
+    const commands: PuckUiCommand[] = [];
+
+    if (ctx?.areaId && ctx.areaId !== "root") {
+      commands.push({
+        id: "select-parent",
+        label: "Select parent",
+        icon: <CornerLeftUp size={16} />,
+        group: "hierarchy",
+        order: 10,
+        execute: onSelectParent,
+      });
+    }
+
+    if (permissions.insert) {
+      commands.push(
+        {
+          id: "insert-before",
+          label: "Insert before",
+          icon: <InsertBeforeIcon />,
+          group: "insert",
+          order: 20,
+          execute: () =>
+            openQuickInsert({
+              target: beforeTarget,
+              title: "Insert block before",
+            }),
+        },
+        {
+          id: "insert-after",
+          label: "Insert after",
+          icon: <InsertAfterIcon />,
+          group: "insert",
+          order: 21,
+          execute: () =>
+            openQuickInsert({
+              target: afterTarget,
+              title: "Insert block after",
+            }),
+        },
+        {
+          id: "insert-into",
+          label: intoLabel,
+          disabled: !intoTarget,
+          icon: <InsertIntoIcon />,
+          group: "insert",
+          order: 22,
+          execute: () => {
+            if (!intoTarget) return;
+
+            openQuickInsert({
+              target: intoTarget,
+              title:
+                intoLabel === "Insert into" ? "Insert block into" : intoLabel,
+            });
+          },
+        }
+      );
+    }
+
+    if (hasAiPlugin) {
+      commands.push({
+        id: "ai-edit",
+        label: "Edit with AI",
+        icon: <Sparkles size={16} />,
+        group: "ai",
+        order: 30,
+        execute: onAiEdit,
+      });
+    }
+
+    if (permissions.drag) {
+      commands.push({
+        id: "favorite",
+        label: "Favorite",
+        icon: <Star size={16} />,
+        group: "library",
+        order: 40,
+        execute: onFavorite,
+      });
+    }
+
+    if (permissions.duplicate) {
+      commands.push({
+        id: "duplicate",
+        label: "Duplicate",
+        icon: <Copy size={16} />,
+        group: "clipboard",
+        order: 50,
+        execute: onDuplicate,
+      });
+    }
+
+    if (permissions.delete) {
+      commands.push({
+        id: "delete",
+        label: "Delete",
+        icon: <Trash size={16} />,
+        group: "destructive",
+        order: 60,
+        execute: onDelete,
+      });
+    }
+
+    return commands;
+  }, [
+    afterTarget,
+    beforeTarget,
+    ctx?.areaId,
+    hasAiPlugin,
+    intoLabel,
+    intoTarget,
+    onAiEdit,
+    onDelete,
+    onDuplicate,
+    onFavorite,
+    onSelectParent,
+    openQuickInsert,
+    permissions.delete,
+    permissions.drag,
+    permissions.duplicate,
+    permissions.insert,
+  ]);
+
+  const componentCommandContext = useMemo(
+    () => ({
+      appState: appStore.getState().state,
+      componentId: id,
+      componentType,
+      config,
+      dispatch,
+      index,
+      insertTargets: {
+        after: afterTarget,
+        before: beforeTarget,
+        into: intoTarget,
+      },
+      isSelected,
+      label,
+      openQuickInsert,
+      permissions,
+      selectedItem,
+      setUi,
+      zone: zoneCompound,
+    }),
+    [
+      afterTarget,
+      appStore,
+      beforeTarget,
+      componentType,
+      config,
+      dispatch,
+      id,
+      index,
+      intoTarget,
+      isSelected,
+      label,
+      openQuickInsert,
+      permissions,
+      selectedItem,
+      setUi,
+      zoneCompound,
+    ]
+  );
+
+  const resolvedCommands = useMemo(
+    () =>
+      resolveComponentCommands({
+        commandResolvers,
+        context: componentCommandContext,
+        defaults: defaultCommands,
+      }),
+    [commandResolvers, componentCommandContext, defaultCommands]
+  );
+
+  const actionBarCommands = useMemo(
+    () => filterCommandsBySurface(resolvedCommands, "actionBar"),
+    [resolvedCommands]
+  );
+
+  const contextMenuCommands = useMemo(
+    () => filterCommandsBySurface(resolvedCommands, "contextMenu"),
+    [resolvedCommands]
+  );
+
   const [hover, setHover] = useState(false);
 
   const indicativeHover = useContextStore(
@@ -620,10 +957,31 @@ export const DraggableComponent = ({
       setHover(false);
     };
 
+    const _onContextMenu = (e: Event) => {
+      const userIsDragging = !!zoneStore.getState().draggedItem;
+
+      if (userIsDragging) {
+        return;
+      }
+
+      const event = e as MouseEvent;
+      event.preventDefault();
+      event.stopPropagation();
+
+      setUi({
+        itemSelector: { index, zone: zoneCompound },
+      });
+      setContextMenuPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+    };
+
     el.setAttribute("data-puck-component", id);
     el.setAttribute("data-puck-dnd", id);
     el.style.position = "relative";
     el.addEventListener("click", onClick);
+    el.addEventListener("contextmenu", _onContextMenu);
     el.addEventListener("mouseover", _onMouseOver);
     el.addEventListener("mouseout", _onMouseOut);
 
@@ -631,6 +989,7 @@ export const DraggableComponent = ({
       el.removeAttribute("data-puck-component");
       el.removeAttribute("data-puck-dnd");
       el.removeEventListener("click", onClick);
+      el.removeEventListener("contextmenu", _onContextMenu);
       el.removeEventListener("mouseover", _onMouseOver);
       el.removeEventListener("mouseout", _onMouseOut);
     };
@@ -642,6 +1001,7 @@ export const DraggableComponent = ({
     id,
     thisIsDragging,
     inDroppableZone,
+    setUi,
   ]);
 
   const [isVisible, setIsVisible] = useState(false);
@@ -793,17 +1153,6 @@ export const DraggableComponent = ({
     setDragAxis(autoDragAxis);
   }, [ref, userDragAxis, autoDragAxis]);
 
-  const parentAction = useMemo(
-    () =>
-      ctx?.areaId &&
-      ctx?.areaId !== "root" && (
-        <ActionBar.Action onClick={onSelectParent} label="Select parent">
-          <CornerLeftUp size={16} />
-        </ActionBar.Action>
-      ),
-    [ctx?.areaId]
-  );
-
   const nextContextValue = useMemo<DropZoneContext>(
     () => ({
       ...ctx!,
@@ -829,9 +1178,11 @@ export const DraggableComponent = ({
     s.currentRichText?.inlineComponentId === id ? s.currentRichText : null
   );
 
-  const hasFavoriteAction = permissions.drag;
-  const hasNormalActions =
-    permissions.duplicate || permissions.delete || hasAiPlugin || hasFavoriteAction;
+  const actionBarGroups = useMemo(
+    () => groupCommands(actionBarCommands),
+    [actionBarCommands]
+  );
+  const hasNormalActions = actionBarCommands.length > 0;
 
   return (
     <DropZoneProvider value={nextContextValue}>
@@ -870,10 +1221,7 @@ export const DraggableComponent = ({
                 }}
                 ref={syncActionsPosition}
               >
-                <CustomActionBar
-                  parentAction={parentAction}
-                  label={DEBUG ? id : label}
-                >
+                <CustomActionBar parentAction={null} label={DEBUG ? id : label}>
                   {richText && (
                     <>
                       <LoadedRichTextMenu
@@ -885,29 +1233,20 @@ export const DraggableComponent = ({
                       {hasNormalActions && <ActionBar.Separator />}
                     </>
                   )}
-
-                  {hasAiPlugin && (
-                    <ActionBar.Action onClick={onAiEdit} label="Edit with AI">
-                      <Sparkles size={16} />
-                    </ActionBar.Action>
-                  )}
-                  {hasFavoriteAction && (
-                    <ActionBar.Action onClick={onFavorite} label="Favorite">
-                      <Star size={16} />
-                    </ActionBar.Action>
-                  )}
-                  {(permissions.duplicate || permissions.delete) &&
-                    (hasAiPlugin || hasFavoriteAction) && <ActionBar.Separator />}
-                  {permissions.duplicate && (
-                    <ActionBar.Action onClick={onDuplicate} label="Duplicate">
-                      <Copy size={16} />
-                    </ActionBar.Action>
-                  )}
-                  {permissions.delete && (
-                    <ActionBar.Action onClick={onDelete} label="Delete">
-                      <Trash size={16} />
-                    </ActionBar.Action>
-                  )}
+                  {actionBarGroups.map((group) => (
+                    <ActionBar.Group key={group.id}>
+                      {group.commands.map((command) => (
+                        <ActionBar.Action
+                          disabled={command.disabled}
+                          key={command.id}
+                          label={command.label}
+                          onClick={command.execute}
+                        >
+                          {command.icon || command.label}
+                        </ActionBar.Action>
+                      ))}
+                    </ActionBar.Group>
+                  ))}
                 </CustomActionBar>
               </div>
             </div>
@@ -924,6 +1263,25 @@ export const DraggableComponent = ({
           </div>,
           portalEl || document.body
         )}
+      {quickInsertTarget && (
+        <QuickInsert
+          allow={quickInsertTarget.target.allow}
+          destinationIndex={quickInsertTarget.target.destinationIndex}
+          destinationZone={quickInsertTarget.target.destinationZone}
+          disallow={quickInsertTarget.target.disallow}
+          isOpen
+          onClose={() => setQuickInsertTarget(null)}
+          title={quickInsertTarget.title}
+        />
+      )}
+      <ContextMenu
+        commands={contextMenuCommands}
+        isOpen={!!contextMenuPosition}
+        onClose={() => setContextMenuPosition(null)}
+        portalEl={ref.current?.ownerDocument.body}
+        x={contextMenuPosition?.x ?? 0}
+        y={contextMenuPosition?.y ?? 0}
+      />
       {children(refSetter)}
     </DropZoneProvider>
   );

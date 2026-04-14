@@ -1,4 +1,11 @@
-import { ReactElement, ReactNode, useEffect, useMemo, useState } from "react";
+import {
+  ReactElement,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { getClassNameFactory } from "../../../../lib";
 import { IframeConfig, UiState } from "../../../../types";
 import { usePropsContext } from "../..";
@@ -6,7 +13,11 @@ import styles from "./styles.module.css";
 import { useInjectGlobalCss } from "../../../../lib/use-inject-css";
 import { useAppStore, useAppStoreApi } from "../../../../store";
 import { DefaultOverride } from "../../../DefaultOverride";
-import { monitorHotkeys, useMonitorHotkeys } from "../../../../lib/use-hotkey";
+import {
+  monitorHotkeys,
+  useHotkey,
+  useMonitorHotkeys,
+} from "../../../../lib/use-hotkey";
 import { getFrame } from "../../../../lib/get-frame";
 import { usePreviewModeHotkeys } from "../../../../lib/use-preview-mode-hotkeys";
 import { DragDropContext } from "../../../DragDropContext";
@@ -25,6 +36,8 @@ import { PluginInternal } from "../../../../types/Internal";
 import { blocksPlugin } from "../../../../plugins/blocks";
 import { outlinePlugin } from "../../../../plugins/outline";
 import { fieldsPlugin } from "../../../../plugins/fields";
+import { rootDroppableId } from "../../../../lib/root-droppable-id";
+import { QuickInsert } from "../../../QuickInsert";
 
 const getClassName = getClassNameFactory("Puck", styles);
 const getLayoutClassName = getClassNameFactory("PuckLayout", styles);
@@ -262,6 +275,30 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
   const mobilePanelExpanded = useAppStore(
     (s) => s.state.ui.mobilePanelExpanded ?? false
   );
+  const [globalQuickInsertTarget, setGlobalQuickInsertTarget] = useState({
+    destinationIndex: 0,
+    destinationZone: rootDroppableId,
+  });
+  const [isGlobalQuickInsertOpen, setIsGlobalQuickInsertOpen] = useState(false);
+
+  const openGlobalQuickInsert = useCallback(() => {
+    const state = appStoreApi.getState().state;
+    const itemSelector = state.ui.itemSelector;
+    const destinationZone = itemSelector?.zone ?? rootDroppableId;
+    const destinationIndex =
+      itemSelector?.zone && typeof itemSelector.index === "number"
+        ? itemSelector.index + 1
+        : state.indexes.zones[destinationZone]?.contentIds.length ?? 0;
+
+    setGlobalQuickInsertTarget({
+      destinationIndex,
+      destinationZone,
+    });
+    setIsGlobalQuickInsertOpen(true);
+  }, [appStoreApi]);
+
+  useHotkey({ meta: true, k: true }, openGlobalQuickInsert);
+  useHotkey({ ctrl: true, k: true }, openGlobalQuickInsert);
 
   return (
     <div
@@ -278,87 +315,94 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
               <FrameProvider>
                 <div
                   className={getLayoutClassName({
-                  leftSideBarVisible,
-                  mounted,
-                  rightSideBarVisible:
-                    !hasDesktopFieldsPlugin && rightSideBarVisible,
-                  isExpanded: mobilePanelExpanded,
-                  mobilePanelHeightToggle: mobilePanelHeightMode === "toggle",
-                  mobilePanelHeightMinContent:
-                    mobilePanelHeightMode === "min-content",
-                })}
-                style={{ height, minHeight: 0 }}
-              >
-                <div
-                  className={getLayoutClassName("inner")}
-                  style={layoutOptions}
+                    leftSideBarVisible,
+                    mounted,
+                    rightSideBarVisible:
+                      !hasDesktopFieldsPlugin && rightSideBarVisible,
+                    isExpanded: mobilePanelExpanded,
+                    mobilePanelHeightToggle: mobilePanelHeightMode === "toggle",
+                    mobilePanelHeightMinContent:
+                      mobilePanelHeightMode === "min-content",
+                  })}
+                  style={{ height, minHeight: 0 }}
                 >
-                  <div className={getLayoutClassName("header")}>
-                    <Header hidePlugins={hasLegacySideBarPlugin} />
-                  </div>
-                  <div className={getLayoutClassName("nav")}>
-                    <Nav
-                      items={pluginItems}
-                      mobileActions={
-                        leftSideBarVisible &&
-                        mobilePanelHeightMode === "toggle" && (
-                          <IconButton
-                            type="button"
-                            title="maximize"
-                            onClick={() => {
-                              setUi({
-                                mobilePanelExpanded: !mobilePanelExpanded,
-                              });
-                            }}
-                          >
-                            {mobilePanelExpanded ? (
-                              <Minimize2 size={21} />
-                            ) : (
-                              <Maximize2 size={21} />
-                            )}
-                          </IconButton>
-                        )
-                      }
-                    />
-                  </div>
-                  <Sidebar
-                    position="left"
-                    sidebarRef={leftSidebarRef}
-                    isVisible={leftSideBarVisible}
-                    onResize={setLeftWidth}
-                    onResizeEnd={handleLeftSidebarResizeEnd}
+                  <div
+                    className={getLayoutClassName("inner")}
+                    style={layoutOptions}
                   >
-                    {Object.entries(pluginItems).map(
-                      ([id, { mobileOnly, render: Render, label }]) => (
-                        <PluginTab
-                          key={id}
-                          visible={currentPlugin === id}
-                          mobileOnly={mobileOnly}
-                        >
-                          <Render />
-                        </PluginTab>
-                      )
-                    )}
-                  </Sidebar>
-                  <Canvas />
-                  {!hasDesktopFieldsPlugin && (
+                    <div className={getLayoutClassName("header")}>
+                      <Header hidePlugins={hasLegacySideBarPlugin} />
+                    </div>
+                    <div className={getLayoutClassName("nav")}>
+                      <Nav
+                        items={pluginItems}
+                        mobileActions={
+                          leftSideBarVisible &&
+                          mobilePanelHeightMode === "toggle" && (
+                            <IconButton
+                              type="button"
+                              title="maximize"
+                              onClick={() => {
+                                setUi({
+                                  mobilePanelExpanded: !mobilePanelExpanded,
+                                });
+                              }}
+                            >
+                              {mobilePanelExpanded ? (
+                                <Minimize2 size={21} />
+                              ) : (
+                                <Maximize2 size={21} />
+                              )}
+                            </IconButton>
+                          )
+                        }
+                      />
+                    </div>
                     <Sidebar
-                      position="right"
-                      sidebarRef={rightSidebarRef}
-                      isVisible={rightSideBarVisible}
-                      onResize={setRightWidth}
-                      onResizeEnd={handleRightSidebarResizeEnd}
+                      position="left"
+                      sidebarRef={leftSidebarRef}
+                      isVisible={leftSideBarVisible}
+                      onResize={setLeftWidth}
+                      onResizeEnd={handleLeftSidebarResizeEnd}
                     >
-                      <FieldSideBar />
+                      {Object.entries(pluginItems).map(
+                        ([id, { mobileOnly, render: Render, label }]) => (
+                          <PluginTab
+                            key={id}
+                            visible={currentPlugin === id}
+                            mobileOnly={mobileOnly}
+                          >
+                            <Render />
+                          </PluginTab>
+                        )
+                      )}
                     </Sidebar>
-                  )}
+                    <Canvas />
+                    {!hasDesktopFieldsPlugin && (
+                      <Sidebar
+                        position="right"
+                        sidebarRef={rightSidebarRef}
+                        isVisible={rightSideBarVisible}
+                        onResize={setRightWidth}
+                        onResizeEnd={handleRightSidebarResizeEnd}
+                      >
+                        <FieldSideBar />
+                      </Sidebar>
+                    )}
+                  </div>
                 </div>
-              </div>
               </FrameProvider>
             )}
           </CustomPuck>
         </div>
       </DragDropContext>
+      <QuickInsert
+        destinationIndex={globalQuickInsertTarget.destinationIndex}
+        destinationZone={globalQuickInsertTarget.destinationZone}
+        isOpen={isGlobalQuickInsertOpen}
+        onClose={() => setIsGlobalQuickInsertOpen(false)}
+        title="Quick insert"
+      />
       <div id="puck-portal-root" className={getClassName("portal")} />
     </div>
   );

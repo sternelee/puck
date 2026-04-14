@@ -1,0 +1,199 @@
+.BlockPreview {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  color: var(--puck-color-black, #09090b);
+  font-family: var(--puck-font-family, Inter, sans-serif);
+  filter: drop-shadow(0 22px 44px rgba(15, 23, 42, 0.18));
+}
+
+.BlockPreview::before {
+  content: "";
+  position: absolute;
+  inset: 10px 16px auto;
+  height: 26px;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.18),
+    rgba(59, 130, 246, 0.04)
+  );
+  filter: blur(18px);
+  pointer-events: none;
+}
+
+.BlockPreview-trigger {
+  display: block;
+  width: 100%;
+}
+
+.BlockPreview-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid color-mix(in srgb, var(--puck-color-grey-09, #e4e4e7) 92%, white);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.94)),
+    var(--puck-color-white, #fff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 12px 32px rgba(15, 23, 42, 0.12),
+    0 2px 8px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(12px);
+}
+
+.BlockPreview-content::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.BlockPreview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.BlockPreview-eyebrow {
+  color: var(--puck-color-azure-04, #2563eb);
+  font-size: var(--puck-font-size-xxxs, 11px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.BlockPreview-label {
+  color: var(--puck-color-black, #09090b);
+  font-size: var(--puck-font-size-xxs, 13px);
+  font-weight: 650;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.BlockPreview-meta {
+  color: var(--puck-color-grey-05, #52525b);
+  font-size: var(--puck-font-size-xxxs, 11px);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.BlockPreview-viewport {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--puck-color-azure-12, #f8fbff) 72%, white) 0%,
+    var(--puck-color-grey-12, #fcfcfd) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--puck-color-grey-09, #e4e4e7) 88%, white);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 0 0 1px rgba(59, 130, 246, 0.04);
+}
+
+.BlockPreview-viewport::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.56), transparent 30%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.08), transparent 38%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.BlockPreview-scale {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.BlockPreview-stage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.BlockPreview-chrome {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 32px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgba(228, 228, 231, 0.9);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(244, 244, 245, 0.85));
+}
+
+.BlockPreview-chromeDots {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.BlockPreview-chromeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(113, 113, 122, 0.4);
+}
+
+.BlockPreview-chromeDot:first-child {
+  background: rgba(239, 68, 68, 0.45);
+}
+
+.BlockPreview-chromeDot:nth-child(2) {
+  background: rgba(245, 158, 11, 0.45);
+}
+
+.BlockPreview-chromeDot:nth-child(3) {
+  background: rgba(34, 197, 94, 0.45);
+}
+
+.BlockPreview-chromeLabel {
+  color: var(--puck-color-grey-05, #52525b);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.BlockPreview-canvas {
+  min-height: 100%;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.98)),
+    var(--puck-color-white, #fff);
+}
+
+.BlockPreview-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 2px 4px;
+}
+
+.BlockPreview-emptyTitle {
+  color: var(--puck-color-black, #09090b);
+  font-size: var(--puck-font-size-xxs, 13px);
+  font-weight: 600;
+}
+
+.BlockPreview-emptyText {
+  color: var(--puck-color-grey-05, #52525b);
+  font-size: var(--puck-font-size-xxxs, 11px);
+  line-height: 1.5;
+}

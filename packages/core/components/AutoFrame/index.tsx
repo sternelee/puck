@@ -6,8 +6,13 @@ import {
   useEffect,
   useState,
 } from "react";
-import hash from "object-hash";
+import * as objectHashModule from "object-hash";
 import { createPortal } from "react-dom";
+
+const hash =
+  "default" in objectHashModule
+    ? objectHashModule.default
+    : (objectHashModule as typeof import("object-hash"));
 
 const styleSelector = 'style, link[rel="stylesheet"]';
 

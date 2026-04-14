@@ -1,9 +1,22 @@
-import flat from "flat";
+import * as flatModule from "flat";
 import { ComponentData, Config, RootData, UserGenerics } from "../../types";
 import { stripSlots } from "./strip-slots";
 
-// Explicitly destructure to account for flat module issues: https://github.com/puckeditor/puck/issues/1089
-const { flatten, unflatten } = flat;
+type FlatFn = (
+  target: Record<string, any>,
+  opts?: Record<string, any>
+) => Record<string, any>;
+type FlatNamespace = FlatFn & {
+  flatten?: FlatFn;
+  unflatten?: FlatFn;
+};
+
+const flat = ("default" in flatModule
+  ? flatModule.default
+  : flatModule) as unknown as FlatNamespace;
+
+const flatten = flat.flatten ?? flat;
+const unflatten = flat.unflatten ?? flat;
 
 const isPureObject = (val: any) =>
   val != null && Object.prototype.toString.call(val) === "[object Object]";

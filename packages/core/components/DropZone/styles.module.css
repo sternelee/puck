@@ -22,7 +22,8 @@
 }
 
 .DropZone--isAreaSelected,
-.DropZone--hoveringOverArea:not(.DropZone--isRootZone) {
+.DropZone--hoveringOverArea:not(.DropZone--isRootZone),
+.DropZone--isEmpty {
   background: color-mix(in srgb, var(--puck-color-azure-09) 30%, transparent);
   outline: 2px dashed var(--puck-color-azure-08);
 }
@@ -62,6 +63,66 @@
 
 .DropZone > *:not([data-puck-component]) {
   opacity: 0;
+}
+
+.DropZone > [data-puck-dropzone-placeholder] {
+  opacity: 1;
+}
+
+.DropZone-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--min-empty-height);
+  padding: 20px 12px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.DropZone-placeholderTitle {
+  color: var(--puck-color-black);
+  font-size: var(--puck-font-size-xxs);
+  font-weight: 600;
+}
+
+.DropZone-placeholderText {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  line-height: 1.5;
+  max-width: 260px;
+}
+
+.DropZone-placeholderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.DropZone-placeholderShortcut {
+  color: var(--puck-color-grey-05);
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+}
+
+.DropZone-placeholderLink {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  color: var(--puck-color-azure-04);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--puck-font-size-xxxs);
+  font-weight: 600;
+  padding: 0;
+}
+
+.DropZone-placeholderLink:focus-visible {
+  outline: 2px solid var(--puck-color-azure-05);
+  outline-offset: 2px;
 }
 
 /* Hide overlays if DropZone is animating, which happens during a resize */

@@ -7,6 +7,7 @@ import { ComponentDataOptionalId, Content, Data } from "./../Data";
 import { Overrides } from "./Overrides";
 import { FieldTransforms } from "./FieldTransforms";
 import { Config, DefaultComponents } from "../Config";
+import type { PuckCommands } from "./Commands";
 
 export type Permissions = {
   drag: boolean;
@@ -32,6 +33,7 @@ export type Plugin<UserConfig extends Config = Config> = {
   label?: string;
   icon?: ReactNode;
   render?: () => ReactElement;
+  commands?: Partial<PuckCommands<UserConfig>>;
   overrides?: Partial<Overrides<UserConfig>>;
   fieldTransforms?: FieldTransforms<UserConfig>;
   mobilePanelHeight?: "toggle" | "min-content";
@@ -79,6 +81,8 @@ export type RichText = string | ReactNode;
 
 export * from "./DropZone";
 export * from "./Viewports";
+export * from "./Commands";
+export * from "./InsertionTarget";
 
 export type { Overrides };
 
