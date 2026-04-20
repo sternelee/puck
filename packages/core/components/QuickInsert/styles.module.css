@@ -104,15 +104,20 @@
   appearance: none;
   background: var(--puck-color-white);
   border: 1px solid var(--puck-color-grey-09);
-  border-radius: 6px;
+  border-radius: 4px;
+  box-sizing: border-box;
   color: inherit;
   cursor: pointer;
   display: flex;
   flex-direction: column;
+  align-items: stretch;
   gap: 2px;
+  font-size: var(--puck-font-size-xxs);
   min-width: 0;
-  padding: 10px 12px;
+  padding: 12px;
   text-align: left;
+  transition: background-color 50ms ease-in, color 50ms ease-in;
+  width: 100%;
 }
 
 .QuickInsert-item:focus-visible {
@@ -122,14 +127,21 @@
 
 .QuickInsert-item--isActive {
   background-color: var(--puck-color-azure-12);
-  border-color: var(--puck-color-azure-08);
-  box-shadow: 0 0 0 1px var(--puck-color-azure-08);
+  border-radius: 4px;
+  outline: 2px solid var(--puck-color-azure-05);
+  outline-offset: 2px;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .QuickInsert-item:hover {
     background-color: var(--puck-color-azure-12);
-    border-color: var(--puck-color-azure-08);
+    color: var(--puck-color-azure-04);
+    transition: none;
+  }
+
+  .QuickInsert-item:hover .QuickInsert-itemTitle,
+  .QuickInsert-item:hover .QuickInsert-itemMeta {
+    color: var(--puck-color-azure-04);
   }
 }
 

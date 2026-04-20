@@ -56,8 +56,7 @@ import { FieldTransforms } from "../../types/API/FieldTransforms";
 import { useRichtextProps } from "../RichTextEditor/lib/use-richtext-props";
 import { MemoizeComponent } from "../MemoizeComponent";
 import { VirtualizedDropZone } from "./VirtualizedDropZone";
-import { Button } from "../Button";
-import { focusBlocksSearch, getBlocksShortcutLabel } from "../../lib/blocks";
+import { getBlocksShortcutLabel } from "../../lib/blocks";
 import { QuickInsert } from "../QuickInsert";
 
 const getClassName = getClassNameFactory("DropZone", styles);
@@ -106,7 +105,6 @@ const EmptyDropZoneState = ({
   disallow?: string[];
   isRootZone: boolean;
 }) => {
-  const setUi = useAppStore((s) => s.setUi);
   const shortcutLabel = useMemo(() => getBlocksShortcutLabel(), []);
   const [isQuickInsertOpen, setIsQuickInsertOpen] = useState(false);
 
@@ -120,20 +118,6 @@ const EmptyDropZoneState = ({
     []
   );
 
-  const handleOpenSidebarBlocks = useCallback(
-    (event: MouseEvent<HTMLButtonElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-
-      setUi({
-        leftSideBarVisible: true,
-        plugin: { current: "blocks" },
-      });
-      focusBlocksSearch();
-    },
-    [setUi]
-  );
-
   return (
     <>
       <div
@@ -142,24 +126,7 @@ const EmptyDropZoneState = ({
         onClick={handleOpenBlocks}
       >
         <div className={getClassName("placeholderTitle")}>
-          {isRootZone
-            ? "Start with your first block"
-            : "Add a block to this area"}
-        </div>
-        <div className={getClassName("placeholderText")}>
-          Click to insert a block here, or open the sidebar browser.
-        </div>
-        <div className={getClassName("placeholderActions")}>
-          <Button type="button" variant="secondary" onClick={handleOpenBlocks}>
-            Quick insert
-          </Button>
-          <button
-            className={getClassName("placeholderLink")}
-            onClick={handleOpenSidebarBlocks}
-            type="button"
-          >
-            Open blocks
-          </button>
+          Insert block{" "}
           <span className={getClassName("placeholderShortcut")}>
             {shortcutLabel}
           </span>
@@ -390,7 +357,7 @@ export const DropZoneEdit = forwardRef<HTMLDivElement, DropZoneProps>(
       disallow,
       style,
       className,
-      minEmptyHeight: userMinEmptyHeight = "128px",
+      minEmptyHeight: userMinEmptyHeight = "48px",
       collisionAxis,
       as,
     },
