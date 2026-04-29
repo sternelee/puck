@@ -11,11 +11,12 @@ import { Modal } from "../Modal";
 import { Heading } from "../Heading";
 import styles from "./styles.module.css";
 import getClassNameFactory from "../../lib/get-class-name-factory";
-import { Search, Star } from "lucide-react";
+import { Search, Star, Trash } from "lucide-react";
 import { usePropsContext } from "../Puck";
 import {
   PuckFavoriteComponent,
   PUCK_FAVORITES_UPDATED_EVENT,
+  removePuckFavorite,
 } from "../../lib/favorites";
 import {
   buildBlockCatalogSections,
@@ -271,47 +272,71 @@ export const QuickInsert = ({
                     const isActive = itemIndex === activeIndex;
 
                     return (
-                      <button
-                        aria-selected={isActive}
-                        className={getClassName({ item: true, isActive })}
-                        id={`puck-quick-insert-item-${itemIndex}`}
+                      <div
+                        className={getClassName("itemCell")}
                         key={item.key}
-                        onClick={() => insertItem(item)}
-                        onMouseEnter={() => setActiveIndex(itemIndex)}
-                        ref={(node) => {
-                          itemRefs.current[itemIndex] = node;
-                        }}
-                        role="option"
-                        type="button"
                       >
-                        {DrawerItemOverride ? (
-                          <DrawerItemOverride name={item.name}>
-                            <>
-                              <div className={getClassName("itemTitle")}>
-                                {item.label}
-                              </div>
-                              <div className={getClassName("itemMeta")}>
-                                {item.data ? "Favorite" : "Block"} · {item.name}
-                              </div>
-                            </>
-                          </DrawerItemOverride>
-                        ) : (
-                          <BlockPreview
-                            label={item.label}
-                            name={item.name}
-                            previewData={item.data}
+                        <button
+                          aria-selected={isActive}
+                          className={getClassName({ item: true, isActive })}
+                          id={`puck-quick-insert-item-${itemIndex}`}
+                          onClick={() => insertItem(item)}
+                          onMouseEnter={() => setActiveIndex(itemIndex)}
+                          ref={(node) => {
+                            itemRefs.current[itemIndex] = node;
+                          }}
+                          role="option"
+                          type="button"
+                        >
+                          {DrawerItemOverride ? (
+                            <DrawerItemOverride name={item.name}>
+                              <>
+                                <div className={getClassName("itemTitle")}>
+                                  {item.label}
+                                </div>
+                                <div className={getClassName("itemMeta")}>
+                                  {item.data ? "Favorite" : "Block"} ·{" "}
+                                  {item.name}
+                                </div>
+                              </>
+                            </DrawerItemOverride>
+                          ) : (
+                            <BlockPreview
+                              label={item.label}
+                              name={item.name}
+                              previewData={item.data}
+                            >
+                              <>
+                                <div className={getClassName("itemTitle")}>
+                                  {item.label}
+                                </div>
+                                <div className={getClassName("itemMeta")}>
+                                  {item.data ? "Favorite" : "Block"} ·{" "}
+                                  {item.name}
+                                </div>
+                              </>
+                            </BlockPreview>
+                          )}
+                        </button>
+                        {section.id === "favorites" && item.data && (
+                          <button
+                            aria-label="Remove from favorites"
+                            className={getClassName("removeFavorite")}
+                            data-puck-favorite-remove=""
+                            title="Remove from favorites"
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              removePuckFavorite(
+                                item.key,
+                                favoritesStorageKey
+                              );
+                            }}
                           >
-                            <>
-                              <div className={getClassName("itemTitle")}>
-                                {item.label}
-                              </div>
-                              <div className={getClassName("itemMeta")}>
-                                {item.data ? "Favorite" : "Block"} · {item.name}
-                              </div>
-                            </>
-                          </BlockPreview>
+                            <Trash aria-hidden size={14} strokeWidth={2} />
+                          </button>
                         )}
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

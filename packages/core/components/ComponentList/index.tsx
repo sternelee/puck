@@ -13,12 +13,14 @@ const ComponentListItem = ({
   label,
   data,
   isDragDisabled,
+  onRemoveFavorite,
 }: {
   name: string;
   label?: string;
   data?: DrawerItemData;
   index?: number; // TODO deprecate
   isDragDisabled?: boolean;
+  onRemoveFavorite?: () => void;
 }) => {
   const overrides = useAppStore((s) => s.overrides);
   const canInsert = useAppStore(
@@ -43,6 +45,7 @@ const ComponentListItem = ({
       name={name}
       data={data}
       isDragDisabled={isDragDisabled ?? !canInsert}
+      onRemove={onRemoveFavorite}
     >
       {overrides.componentItem ?? overrides.drawerItem}
     </Drawer.Item>

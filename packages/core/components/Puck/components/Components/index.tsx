@@ -12,6 +12,7 @@ import {
   buildBlockCatalogSections,
   readFavoriteComponents,
 } from "../../../../lib/block-catalog";
+import { removePuckFavorite } from "../../../../lib/favorites";
 import { usePropsContext } from "../../index";
 import styles from "./styles.module.css";
 import getClassNameFactory from "../../../../lib/get-class-name-factory";
@@ -161,6 +162,12 @@ export const Components = () => {
                     key={item.key}
                     label={item.label}
                     name={item.name}
+                    onRemoveFavorite={
+                      section.id === "favorites"
+                        ? () =>
+                            removePuckFavorite(item.key, favoritesStorageKey)
+                        : undefined
+                    }
                   />
                 ))}
               </ComponentList>

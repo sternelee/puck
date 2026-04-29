@@ -2,6 +2,7 @@ import styles from "./styles.module.css";
 import getClassNameFactory from "../../lib/get-class-name-factory";
 import { DragIcon } from "../DragIcon";
 import { ReactElement, ReactNode, Ref, useMemo, useState } from "react";
+import { Trash } from "lucide-react";
 import { generateId } from "../../lib/generate-id";
 import { useDragListener } from "../DragDropContext";
 import { useSafeId } from "../../lib/use-safe-id";
@@ -76,6 +77,7 @@ const DrawerItemDraggable = ({
   id,
   data,
   isDragDisabled,
+  onRemove,
 }: {
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
   name: string;
@@ -83,6 +85,7 @@ const DrawerItemDraggable = ({
   id: string;
   data?: DrawerItemData;
   isDragDisabled?: boolean;
+  onRemove?: () => void;
 }) => {
   const config = useAppStore((s) => s.config);
   const previewData = useMemo(() => {
@@ -114,16 +117,42 @@ const DrawerItemDraggable = ({
           {children}
         </DrawerItemInner>
       </div>
-      <div className={getClassName("draggableFg")}>
-        <DrawerItemInner
-          data={data}
-          name={name}
-          label={label}
-          dragRef={ref}
-          isDragDisabled={isDragDisabled}
-        >
-          {children}
-        </DrawerItemInner>
+      <div className={getClassName("draggableRow")}>
+        <div className={getClassName("draggableFg")}>
+          <DrawerItemInner
+            data={data}
+            name={name}
+            label={label}
+            dragRef={ref}
+            isDragDisabled={isDragDisabled}
+          >
+            {children}
+          </DrawerItemInner>
+        </div>
+        {onRemove && (
+          <button
+            aria-label="Remove from favorites"
+            className={getClassName("removeFavorite")}
+            data-puck-favorite-remove=""
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onRemove();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === " " || event.key === "Enter") {
+                event.stopPropagation();
+              }
+            }}
+            onPointerDown={(event) => {
+              event.stopPropagation();
+            }}
+            title="Remove from favorites"
+          >
+            <Trash size={14} aria-hidden strokeWidth={2} />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -137,6 +166,7 @@ const DrawerItem = ({
   data,
   index,
   isDragDisabled,
+  onRemove,
 }: {
   name: string;
   children?: (props: { children: ReactNode; name: string }) => ReactElement;
@@ -145,6 +175,7 @@ const DrawerItem = ({
   data?: DrawerItemData;
   index?: number; // TODO deprecate
   isDragDisabled?: boolean;
+  onRemove?: () => void;
 }) => {
   const resolvedId = id || name;
   const [dynamicId, setDynamicId] = useState(generateId(resolvedId));
@@ -171,6 +202,7 @@ const DrawerItem = ({
         id={dynamicId}
         data={data}
         isDragDisabled={isDragDisabled}
+        onRemove={onRemove}
       >
         {children}
       </DrawerItemDraggable>

@@ -6,17 +6,94 @@
 }
 
 .Drawer-draggable {
+  display: flex;
+  flex-direction: column;
   position: relative;
+  width: 100%;
+}
+
+.Drawer-draggableRow {
+  isolation: isolate;
+  position: relative;
+  width: 100%;
+  z-index: 0;
+}
+
+.Drawer-draggableFg {
+  position: relative;
+  width: 100%;
+  z-index: 0;
 }
 
 .Drawer-draggableBg {
-  position: absolute;
-  top: 0;
-  right: 0;
   bottom: 0;
   left: 0;
   pointer-events: none;
+  position: absolute;
+  right: 0;
+  top: 0;
   z-index: -1;
+}
+
+.Drawer-removeFavorite {
+  align-items: center;
+  appearance: none;
+  background-color: var(--puck-color-white);
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: var(--puck-color-grey-05);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  height: 28px;
+  justify-content: center;
+  margin: 0;
+  opacity: 0;
+  padding: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  transition: opacity 50ms ease-in, background-color 50ms ease-in,
+    color 50ms ease-in, border-color 50ms ease-in;
+  width: 28px;
+  z-index: 10;
+}
+
+.Drawer-removeFavorite svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Prefer row hover — works when host styles alter ancestor :hover chaining */
+@media (hover: hover) {
+  .Drawer-draggableRow:hover .Drawer-removeFavorite {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .Drawer-removeFavorite:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--puck-color-azure-05);
+    outline-offset: 2px;
+    pointer-events: auto;
+  }
+
+  .Drawer-removeFavorite:hover {
+    background-color: var(--puck-color-azure-12);
+    border-color: var(--puck-color-azure-08);
+    color: var(--puck-color-azure-04);
+  }
+}
+
+/* Touch / no-hover devices */
+@media (hover: none) {
+  .Drawer-removeFavorite {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .DrawerItem-draggable {

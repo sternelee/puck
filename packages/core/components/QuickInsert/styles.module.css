@@ -100,6 +100,12 @@
   gap: 6px;
 }
 
+.QuickInsert-itemCell {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
 .QuickInsert-item {
   appearance: none;
   background: var(--puck-color-white);
@@ -162,6 +168,65 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.QuickInsert-removeFavorite {
+  align-items: center;
+  appearance: none;
+  background-color: var(--puck-color-white);
+  border: 1px solid var(--puck-color-grey-09);
+  border-radius: 4px;
+  box-sizing: border-box;
+  color: var(--puck-color-grey-05);
+  cursor: pointer;
+  display: flex;
+  flex-shrink: 0;
+  height: 28px;
+  justify-content: center;
+  margin: 0;
+  opacity: 0;
+  padding: 0;
+  pointer-events: none;
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  transition: opacity 50ms ease-in, background-color 50ms ease-in,
+    color 50ms ease-in, border-color 50ms ease-in;
+  width: 28px;
+  z-index: 2;
+}
+
+.QuickInsert-removeFavorite svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  .QuickInsert-itemCell:hover .QuickInsert-removeFavorite {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .QuickInsert-removeFavorite:focus-visible {
+    opacity: 1;
+    outline: 2px solid var(--puck-color-azure-05);
+    outline-offset: 2px;
+    pointer-events: auto;
+  }
+
+  .QuickInsert-removeFavorite:hover {
+    background-color: var(--puck-color-azure-12);
+    border-color: var(--puck-color-azure-08);
+    color: var(--puck-color-azure-04);
+  }
+}
+
+@media (hover: none) {
+  .QuickInsert-removeFavorite {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }
 
 .QuickInsert-empty {
