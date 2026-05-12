@@ -399,13 +399,17 @@ const DragDropContextClient = ({
               }
             }
 
+            const movedToNewPosition =
+              initialSelector.current?.zone !== thisPreview?.zone ||
+              initialSelector.current?.index !== thisPreview?.index;
+
             dispatch({
               type: "setUi",
               ui: {
                 itemSelector: { index, zone },
                 isDragging: false,
               },
-              recordHistory: false,
+              recordHistory: movedToNewPosition,
             });
 
             dragListeners.dragend?.forEach((fn) => {
