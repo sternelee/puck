@@ -25,9 +25,6 @@ export type PuckFavoriteComponent = {
 
 export type PuckFavoriteItem = PuckFavoritePage | PuckFavoriteComponent;
 
-const canUseStorage = () =>
-  typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-
 export const getPuckFavoritesStorageKey = (storageKey?: string) =>
   storageKey?.trim() || DEFAULT_PUCK_FAVORITES_STORAGE_KEY;
 
@@ -36,66 +33,20 @@ export const clonePuckFavoriteData = <T>(data: T): T =>
 
 export const createPuckFavoriteId = (prefix = "favorite") => generateId(prefix);
 
+/** Always returns an empty list — localStorage saving has been removed. */
 export const readPuckFavorites = (
-  storageKey?: string
-): PuckFavoriteItem[] => {
-  if (!canUseStorage()) return [];
+  _storageKey?: string
+): PuckFavoriteItem[] => [];
 
-  try {
-    const raw = window.localStorage.getItem(
-      getPuckFavoritesStorageKey(storageKey)
+/**
+ * No-op: dispatches the update event so UI stays consistent,
+ * but does not write to localStorage.
+ */
+export const removePuckFavorite = (_favoriteId: string, _storageKey?: string) => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(
+      new CustomEvent(PUCK_FAVORITES_UPDATED_EVENT, { detail: [] })
     );
-
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw) as unknown;
-
-    return Array.isArray(parsed) ? (parsed as PuckFavoriteItem[]) : [];
-  } catch {
-    return [];
   }
-};
-
-export const writePuckFavorites = (
-  favorites: PuckFavoriteItem[],
-  storageKey?: string
-) => {
-  if (!canUseStorage()) return favorites;
-
-  const nextFavorites = favorites.map((favorite) => ({
-    ...favorite,
-    data: clonePuckFavoriteData(favorite.data),
-  }));
-
-  window.localStorage.setItem(
-    getPuckFavoritesStorageKey(storageKey),
-    JSON.stringify(nextFavorites)
-  );
-
-  window.dispatchEvent(
-    new CustomEvent(PUCK_FAVORITES_UPDATED_EVENT, {
-      detail: nextFavorites,
-    })
-  );
-
-  return nextFavorites;
-};
-
-export const savePuckFavorite = (
-  favorite: PuckFavoriteItem,
-  storageKey?: string
-) => {
-  const favorites = readPuckFavorites(storageKey);
-  const deduped = favorites.filter((item) => item.id !== favorite.id);
-
-  return writePuckFavorites([favorite, ...deduped], storageKey);
-};
-
-export const removePuckFavorite = (favoriteId: string, storageKey?: string) => {
-  const favorites = readPuckFavorites(storageKey);
-
-  return writePuckFavorites(
-    favorites.filter((favorite) => favorite.id !== favoriteId),
-    storageKey
-  );
+  return [];
 };

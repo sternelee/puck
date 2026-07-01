@@ -10,6 +10,7 @@ export * from "../components/ActionBar";
 export { AutoField, FieldLabel } from "../components/AutoField";
 
 export * from "../components/Button";
+export { ComponentList } from "../components/ComponentList";
 export { Drawer } from "../components/Drawer";
 
 export { DropZone } from "../components/DropZone";

@@ -1,10 +1,3 @@
-.QuickInsert {
-  display: flex;
-  flex-direction: column;
-  max-height: 90dvh;
-  min-height: 46px;
-}
-
 .QuickInsert-header {
   display: flex;
   align-items: center;
@@ -78,6 +71,7 @@
   gap: 12px;
   overflow: auto;
   padding: 16px 20px 20px;
+  max-height: 74dvh;
 }
 
 .QuickInsert-section {
@@ -94,16 +88,19 @@
 }
 
 .QuickInsert-items {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  align-items: start;
-  gap: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .QuickInsert-itemCell {
+  display: inline-flex;
   position: relative;
-  width: 100%;
+  width: fit-content;
   min-width: 0;
+  border: 1px var(--puck-color-grey-09) solid;
+  border-radius: 4px;
+  padding: 10px 18px;
 }
 
 .QuickInsert-item {
@@ -145,8 +142,7 @@
     transition: none;
   }
 
-  .QuickInsert-item:hover .QuickInsert-itemTitle,
-  .QuickInsert-item:hover .QuickInsert-itemMeta {
+  .QuickInsert-item:hover .QuickInsert-itemTitle {
     color: var(--puck-color-azure-04);
   }
 }
@@ -156,15 +152,6 @@
   font-size: var(--puck-font-size-xxs);
   font-weight: 600;
   line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.QuickInsert-itemMeta {
-  color: var(--puck-color-grey-05);
-  font-size: var(--puck-font-size-xxxs);
-  line-height: 1.35;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

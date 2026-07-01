@@ -45,7 +45,6 @@ import { usePropsContext } from "../Puck";
 import {
   clonePuckFavoriteData,
   createPuckFavoriteId,
-  savePuckFavorite,
 } from "../../lib/favorites";
 import type { NodeHandle } from "../../store/slices/nodes";
 import { assignRefs } from "../../lib/assign-refs";
@@ -229,7 +228,7 @@ export const DraggableComponent = ({
   const iframe = useAppStore((s) => s.iframe);
   const selectedItem = useAppStore((s) => s.selectedItem || null);
   const setUi = useAppStore((s) => s.setUi);
-  const { favoritesStorageKey, headerPath } = usePropsContext();
+  const { headerPath, onFavoriteSave } = usePropsContext();
   const hasAiPlugin = useAppStore((s) =>
     s.plugins.some((p) => p.name === "ai")
   );
@@ -683,7 +682,7 @@ export const DraggableComponent = ({
     });
   }, [id, index, zoneCompound, label, componentType]);
 
-  const onFavorite = useCallback(() => {
+  const onFavorite = useCallback(async () => {
     if (typeof window === "undefined") return;
 
     const item = getItem(
@@ -696,36 +695,27 @@ export const DraggableComponent = ({
 
     if (!item) return;
 
-    const favoriteName = window.prompt(
-      "Favorite name",
-      label || componentType || item.type
-    );
+    const candidate = {
+      id: createPuckFavoriteId("favorite-component"),
+      kind: "component" as const,
+      name: label || componentType || item.type,
+      createdAt: new Date().toISOString(),
+      sourcePath: headerPath,
+      componentType: item.type,
+      data: clonePuckFavoriteData(item),
+    };
 
-    if (!favoriteName || favoriteName.trim() === "") {
-      return;
+    // Delegate to the external save handler (e.g. save to remote API).
+    if (onFavoriteSave) {
+      await onFavoriteSave(candidate);
     }
-
-    savePuckFavorite(
-      {
-        id: createPuckFavoriteId("favorite-component"),
-        kind: "component",
-        name: favoriteName.trim(),
-        createdAt: new Date().toISOString(),
-        sourcePath: headerPath,
-        componentType: item.type,
-        data: clonePuckFavoriteData(item),
-      },
-      favoritesStorageKey
-    );
-
-    window.alert(`Saved "${favoriteName.trim()}" to favorites.`);
   }, [
     appStore,
     componentType,
-    favoritesStorageKey,
     headerPath,
     index,
     label,
+    onFavoriteSave,
     zoneCompound,
   ]);
 

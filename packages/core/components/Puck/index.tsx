@@ -72,6 +72,13 @@ type PuckProps<
   commands?: Partial<PuckCommands<UserConfig>>;
   overrides?: Partial<Overrides<UserConfig>>;
   favoritesStorageKey?: string;
+  /**
+   * Optional async callback invoked when the user clicks "Favorite" on a block.
+   * Receives the raw PuckFavoriteComponent (without id/createdAt assigned yet).
+   * Return `true` if the save was handled externally (skip built-in localStorage prompt).
+   * Return `false` (or omit the prop) to fall back to the default window.prompt flow.
+   */
+  onFavoriteSave?: (item: import("../../lib/favorites").PuckFavoriteComponent) => Promise<boolean>;
   fieldTransforms?: FieldTransforms<UserConfig>;
   renderHeader?: (props: {
     children: ReactNode;

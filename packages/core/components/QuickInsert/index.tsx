@@ -272,10 +272,7 @@ export const QuickInsert = ({
                     const isActive = itemIndex === activeIndex;
 
                     return (
-                      <div
-                        className={getClassName("itemCell")}
-                        key={item.key}
-                      >
+                      <div className={getClassName("itemCell")} key={item.key}>
                         <button
                           aria-selected={isActive}
                           className={getClassName({ item: true, isActive })}
@@ -290,15 +287,9 @@ export const QuickInsert = ({
                         >
                           {DrawerItemOverride ? (
                             <DrawerItemOverride name={item.name}>
-                              <>
-                                <div className={getClassName("itemTitle")}>
-                                  {item.label}
-                                </div>
-                                <div className={getClassName("itemMeta")}>
-                                  {item.data ? "Favorite" : "Block"} ·{" "}
-                                  {item.name}
-                                </div>
-                              </>
+                              <div className={getClassName("itemTitle")}>
+                                {item.label}
+                              </div>
                             </DrawerItemOverride>
                           ) : (
                             <BlockPreview
@@ -306,15 +297,9 @@ export const QuickInsert = ({
                               name={item.name}
                               previewData={item.data}
                             >
-                              <>
-                                <div className={getClassName("itemTitle")}>
-                                  {item.label}
-                                </div>
-                                <div className={getClassName("itemMeta")}>
-                                  {item.data ? "Favorite" : "Block"} ·{" "}
-                                  {item.name}
-                                </div>
-                              </>
+                              <div className={getClassName("itemTitle")}>
+                                {item.label}
+                              </div>
                             </BlockPreview>
                           )}
                         </button>
@@ -327,10 +312,7 @@ export const QuickInsert = ({
                             type="button"
                             onClick={(event) => {
                               event.stopPropagation();
-                              removePuckFavorite(
-                                item.key,
-                                favoritesStorageKey
-                              );
+                              removePuckFavorite(item.key, favoritesStorageKey);
                             }}
                           >
                             <Trash aria-hidden size={14} strokeWidth={2} />
