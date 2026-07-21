@@ -16,6 +16,7 @@ import {
 
 import type {
   UiState,
+  DndConfig,
   IframeConfig,
   OnAction,
   Overrides,
@@ -29,6 +30,7 @@ import type {
   Metadata,
   AsFieldProps,
   DefaultComponentProps,
+  Dictionary,
 } from "../../types";
 
 import { PuckAction } from "../../reducer";
@@ -55,6 +57,7 @@ import { populateIds } from "../../lib/data/populate-ids";
 import { toComponent } from "../../lib/data/to-component";
 import { Layout } from "./components/Layout";
 import { useSafeId } from "../../lib/use-safe-id";
+import { normalizeIframeConfig } from "../../lib/style-config";
 
 type PuckProps<
   UserConfig extends Config = Config,
@@ -93,11 +96,10 @@ type PuckProps<
   headerPath?: string;
   viewports?: Viewports;
   iframe?: IframeConfig;
-  dnd?: {
-    disableAutoScroll?: boolean;
-  };
+  dnd?: DndConfig;
   initialHistory?: InitialHistory;
   metadata?: Metadata;
+  dictionary?: Dictionary;
   height?: CSSProperties["height"];
   _experimentalFullScreenCanvas?: boolean;
   _experimentalVirtualization?: boolean;
@@ -133,8 +135,10 @@ function PuckProvider<
     overrides,
     viewports = defaultViewports,
     iframe: _iframe,
+    dnd,
     initialHistory: _initialHistory,
     metadata,
+    dictionary,
     onAction,
     fieldTransforms,
     _experimentalFullScreenCanvas,
@@ -142,11 +146,7 @@ function PuckProvider<
   } = usePropsContext();
 
   const iframe: IframeConfig = useMemo(
-    () => ({
-      enabled: true,
-      waitForStyles: true,
-      ..._iframe,
-    }),
+    () => normalizeIframeConfig(_iframe),
     [_iframe]
   );
 
@@ -289,6 +289,8 @@ function PuckProvider<
         _experimentalVirtualization: !!_experimentalVirtualization,
         onAction,
         metadata,
+        dictionary: dictionary || {},
+        dnd,
         fieldTransforms: loadedFieldTransforms,
       };
     },
@@ -305,6 +307,8 @@ function PuckProvider<
       _experimentalVirtualization,
       onAction,
       metadata,
+      dictionary,
+      dnd,
       loadedFieldTransforms,
     ]
   );

@@ -3,6 +3,7 @@ import {
   ReactNode,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useState,
 } from "react";
@@ -10,8 +11,9 @@ import { getClassNameFactory } from "../../../../lib";
 import { IframeConfig, UiState } from "../../../../types";
 import { usePropsContext } from "../..";
 import styles from "./styles.module.css";
-import { useInjectGlobalCss } from "../../../../lib/use-inject-css";
+import { useInjectUiCss } from "../../../../lib/use-inject-css";
 import { useAppStore, useAppStoreApi } from "../../../../store";
+import { useMessage } from "../../../../lib/use-message";
 import { DefaultOverride } from "../../../DefaultOverride";
 import {
   monitorHotkeys,
@@ -38,21 +40,25 @@ import { outlinePlugin } from "../../../../plugins/outline";
 import { fieldsPlugin } from "../../../../plugins/fields";
 import { rootDroppableId } from "../../../../lib/root-droppable-id";
 import { QuickInsert } from "../../../QuickInsert";
+import { normalizeIframeConfig } from "../../../../lib/style-config";
 
 const getClassName = getClassNameFactory("Puck", styles);
 const getLayoutClassName = getClassNameFactory("PuckLayout", styles);
 const getPluginTabClassName = getClassNameFactory("PuckPluginTab", styles);
+const useBrowserLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 const FieldSideBar = () => {
+  const pageLabel = useMessage("label-page");
   const title = useAppStore((s) =>
     s.selectedItem
       ? s.config.components[s.selectedItem.type]?.["label"] ??
         s.selectedItem.type.toString()
-      : s.config.root?.label || "Page"
+      : s.config.root?.label
   );
 
   return (
-    <SidebarSection noBorderTop showBreadcrumbs title={title}>
+    <SidebarSection noBorderTop showBreadcrumbs title={title || pageLabel}>
       <Fields />
     </SidebarSection>
   );
@@ -87,15 +93,11 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
   const height = heightProp ?? "100dvh";
 
   const iframe: IframeConfig = useMemo(
-    () => ({
-      enabled: true,
-      waitForStyles: true,
-      ..._iframe,
-    }),
+    () => normalizeIframeConfig(_iframe),
     [_iframe]
   );
 
-  useInjectGlobalCss(iframe.enabled);
+  useInjectUiCss();
 
   const dispatch = useAppStore((s) => s.dispatch);
   const leftSideBarVisible = useAppStore((s) => s.state.ui.leftSideBarVisible);
@@ -158,7 +160,7 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
 
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
+  useBrowserLayoutEffect(() => {
     setMounted(true);
   }, []);
 
@@ -182,11 +184,11 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
   const layoutOptions: Record<string, any> = {};
 
   if (leftWidth) {
-    layoutOptions["--puck-user-left-side-bar-width"] = `${leftWidth}px`;
+    layoutOptions["--puck-user-sidebar-left-width"] = `${leftWidth}px`;
   }
 
   if (rightWidth) {
-    layoutOptions["--puck-user-right-side-bar-width"] = `${rightWidth}px`;
+    layoutOptions["--puck-user-sidebar-right-width"] = `${rightWidth}px`;
   }
 
   const setUi = useAppStore((s) => s.setUi);
@@ -202,11 +204,19 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
     [plugins]
   );
 
+  // Localized labels for the built-in plugin tabs, passed into their factories.
+  const blocksLabel = useMessage("plugin-blocks");
+  const outlineLabel = useMessage("plugin-outline");
+  const fieldsLabel = useMessage("plugin-fields");
+
   const pluginItems = useMemo(() => {
     const details: Record<string, MenuItem & { render: () => ReactElement }> =
       {};
 
-    const defaultPlugins: PluginInternal[] = [blocksPlugin(), outlinePlugin()];
+    const defaultPlugins: PluginInternal[] = [
+      blocksPlugin({ label: blocksLabel }),
+      outlinePlugin({ label: outlineLabel }),
+    ];
 
     const isLegacy = (plugin: PluginInternal) =>
       plugin.name === "legacy-side-bar" ? -1 : 0;
@@ -219,7 +229,7 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
     ].sort((a, b) => isLegacy(a) - isLegacy(b));
 
     if (!plugins?.some((p) => p.name === "fields")) {
-      combinedPlugins.push(fieldsPlugin());
+      combinedPlugins.push(fieldsPlugin({ label: fieldsLabel }));
     }
 
     combinedPlugins?.forEach((plugin) => {
@@ -259,7 +269,15 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
     });
 
     return details;
-  }, [plugins, currentPlugin, appStoreApi, leftSideBarVisible]);
+  }, [
+    plugins,
+    currentPlugin,
+    appStoreApi,
+    leftSideBarVisible,
+    blocksLabel,
+    outlineLabel,
+    fieldsLabel,
+  ]);
 
   useEffect(() => {
     if (!currentPlugin) {
@@ -300,13 +318,17 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
   useHotkey({ meta: true, k: true }, openGlobalQuickInsert);
   useHotkey({ ctrl: true, k: true }, openGlobalQuickInsert);
 
+  // Title follows the icon/action: collapse when expanded, expand otherwise.
+  const maximizeLabel = useMessage("layout-maximize");
+  const minimizeLabel = useMessage("layout-minimize");
+
   return (
     <div
       className={`Puck ${getClassName({
         hidePlugins: hasLegacySideBarPlugin,
       })}`}
       id={instanceId}
-      style={{ height, minHeight: 0 }}
+      style={{ height, minHeight: 0, visibility: "hidden" }}
     >
       <DragDropContext disableAutoScroll={dnd?.disableAutoScroll}>
         <div className={getClassName("main")}>
@@ -341,7 +363,11 @@ export const Layout = ({ children }: { children?: ReactNode }) => {
                           mobilePanelHeightMode === "toggle" && (
                             <IconButton
                               type="button"
-                              title="maximize"
+                              title={
+                                mobilePanelExpanded
+                                  ? minimizeLabel
+                                  : maximizeLabel
+                              }
                               onClick={() => {
                                 setUi({
                                   mobilePanelExpanded: !mobilePanelExpanded,

@@ -33,6 +33,7 @@ import {
   PuckUiCommand,
 } from "../../types";
 import { UniqueIdentifier } from "@dnd-kit/abstract";
+import { Feedback } from "@dnd-kit/dom";
 import { getDeepScrollPosition } from "../../lib/get-deep-scroll-position";
 import { DropZoneContext, ZoneStoreContext } from "../DropZone/context";
 import { useShallow } from "zustand/react/shallow";
@@ -57,6 +58,7 @@ import {
   groupCommands,
   resolveComponentCommands,
 } from "../../lib/component-commands";
+import { useMessage } from "../../lib/use-message";
 
 const getClassName = getClassNameFactory("DraggableComponent", styles);
 
@@ -317,7 +319,10 @@ export const DraggableComponent = ({
       duration: 200,
       easing: "cubic-bezier(0.2, 0, 0, 1)",
     },
-    feedback: "clone",
+    plugins: (defaults) => [
+      ...defaults,
+      Feedback.configure({ feedback: "clone" }),
+    ],
   });
 
   useEffect(() => {
@@ -719,6 +724,10 @@ export const DraggableComponent = ({
     zoneCompound,
   ]);
 
+  const selectParentLabel = useMessage("action-selectparent");
+  const duplicateLabel = useMessage("action-duplicate");
+  const deleteLabel = useMessage("action-delete");
+
   const intoLabel =
     intoTarget?.slotFieldName &&
     !["children", "content", "items"].includes(intoTarget.slotFieldName)
@@ -731,7 +740,7 @@ export const DraggableComponent = ({
     if (ctx?.areaId && ctx.areaId !== "root") {
       commands.push({
         id: "select-parent",
-        label: "Select parent",
+        label: selectParentLabel,
         icon: <CornerLeftUp size={16} />,
         group: "hierarchy",
         order: 10,
@@ -810,7 +819,7 @@ export const DraggableComponent = ({
     if (permissions.duplicate) {
       commands.push({
         id: "duplicate",
-        label: "Duplicate",
+        label: duplicateLabel,
         icon: <Copy size={16} />,
         group: "clipboard",
         order: 50,
@@ -821,7 +830,7 @@ export const DraggableComponent = ({
     if (permissions.delete) {
       commands.push({
         id: "delete",
-        label: "Delete",
+        label: deleteLabel,
         icon: <Trash size={16} />,
         group: "destructive",
         order: 60,
@@ -834,6 +843,8 @@ export const DraggableComponent = ({
     afterTarget,
     beforeTarget,
     ctx?.areaId,
+    deleteLabel,
+    duplicateLabel,
     hasAiPlugin,
     intoLabel,
     intoTarget,
@@ -847,6 +858,7 @@ export const DraggableComponent = ({
     permissions.drag,
     permissions.duplicate,
     permissions.insert,
+    selectParentLabel,
   ]);
 
   const componentCommandContext = useMemo(
@@ -1121,6 +1133,12 @@ export const DraggableComponent = ({
     [zoom]
   );
 
+  const actionBarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    syncActionsPosition(actionBarRef.current);
+  }, [actionBarRef.current, syncActionsPosition]);
+
   useEffect(() => {
     if (userDragAxis) {
       setDragAxis(userDragAxis);
@@ -1209,7 +1227,7 @@ export const DraggableComponent = ({
                   paddingLeft: actionsSide,
                   paddingRight: actionsSide,
                 }}
-                ref={syncActionsPosition}
+                ref={actionBarRef}
               >
                 <CustomActionBar parentAction={null} label={DEBUG ? id : label}>
                   {richText && (

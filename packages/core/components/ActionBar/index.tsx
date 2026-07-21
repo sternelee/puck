@@ -1,4 +1,4 @@
-import { ReactNode, SyntheticEvent } from "react";
+import { forwardRef, ReactNode, SyntheticEvent } from "react";
 import getClassNameFactory from "../../lib/get-class-name-factory";
 import styles from "./styles.module.css";
 const getClassName = getClassNameFactory("ActionBar", styles);
@@ -26,22 +26,21 @@ export const ActionBar = ({
   </div>
 );
 
-export const Action = ({
-  children,
-  label,
-  onClick,
-  active = false,
-  disabled,
-}: {
-  children: ReactNode;
-  label?: string;
-  onClick: (e: SyntheticEvent) => void;
-  active?: boolean;
-  disabled?: boolean;
-}) => (
+export const Action = forwardRef<
+  HTMLButtonElement,
+  {
+    children: ReactNode;
+    label?: string;
+    onClick?: (e: SyntheticEvent) => void;
+    active?: boolean;
+    disabled?: boolean;
+  }
+>(({ children, label, onClick, active = false, disabled, ...rest }, ref) => (
   <button
     type="button"
     aria-label={label}
+    {...rest}
+    ref={ref}
     className={getActionClassName({ active, disabled })}
     onClick={onClick}
     title={label}
@@ -50,7 +49,9 @@ export const Action = ({
   >
     {children}
   </button>
-);
+));
+
+Action.displayName = "Action";
 
 export const Group = ({ children }: { children: ReactNode }) => (
   <div className={getClassName("group")}>{children}</div>
